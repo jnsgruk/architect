@@ -9,7 +9,7 @@ _error() { echo -e >&2 "\e[31m[!] ${1:-}\e[0m"; exit 1; }
 
 _main() {
   # Check for internet access and bail out if there isn't any!
-  if ! check_online; then error "Please connect to the internet"; fi
+  if ! _check_online; then _error "Please connect to the internet"; fi
 
   _preamble
   _partition_and_mount
@@ -21,6 +21,11 @@ _main() {
 
   _info "Chrooting and running stage 2"
   arch-chroot /mnt /stage2.sh
+
+  _info "Cleaning up and rebooting"
+  rm /mnt/stage2.sh
+  umount -R /mnt
+  reboot 0
 }
 
 _preamble() {
@@ -79,7 +84,7 @@ _pacstrap() {
 
 _check_online() {
   _info "Checking for an internet connection"
-  if curl -s iconfig.co >/dev/null; then
+  if curl -s ifconfig.co >/dev/null; then
     return 0
   else
     return 1
