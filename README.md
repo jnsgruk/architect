@@ -25,6 +25,18 @@ $ curl -sLo stage1.sh https://raw.githubusercontent.com/jnsgruk/architect/master
 $ DISK=/dev/vda /bin/bash stage1.sh
 ```
 
+Additional options can be specified as environment variables:
+
+|     Name      |  Format  |     Default     | Comment                       |
+| :-----------: | :------: | :-------------: | ----------------------------- |
+| `NEWHOSTNAME` | `string` |    `archie`     | Hostname of installed system. |
+|   `NEWUSER`   | `string` |      `jon`      | Non-root user to create.      |
+|   `LOCALE`    | `string` |  `en_GB.UTF-8`  | Locale to use.                |
+|     `TZ`      | `string` | `Europe/London` | Timezone to configure.        |
+|   `KEYMAP`    | `string` |      `uk`       | Keyboard layout to configure. |
+
+These should be prepended to the install command, as is shown with the `DISK` variable above, or sourced from a `dotenv` file.
+
 ## TODO/Contributing
 
 Coming soon...
