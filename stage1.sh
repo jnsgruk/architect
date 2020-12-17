@@ -30,34 +30,7 @@ _preamble() {
   timedatectl set-ntp true
 }
 
-_partition_uefi_basic_ext4() {
-  # Create a 500MiB FAT32 Boot Partition
-  parted "${DISK}" -s mkpart boot fat32 0% 500MiB
-  # Set the boot/esp flags on the boot partition
-  parted "${DISK}" set 1 boot on
-  # Create a single ext4 root partition
-  parted "${DISK}" -s mkpart root ext4 500MiB 100%
-  # Format the boot partition
-  mkfs.fat -F32 "${DISK}1"
-  # Format the root partition
-  mkfs.ext4 "${DISK}2"
-  # Mount the root partition to /mnt
-  mount "${DISK}2" /mnt
-  # Create the mount point for boot
-  mkdir -p /mnt/boot
-  # Mount the boot partition
-  mount "${DISK}1" /mnt/boot
-}
-
-_partition_uefi_encrypted_ext4() {
-  # Create a 500MiB FAT32 Boot Partition
-  parted "${DISK}" -s mkpart boot fat32 0% 500MiB
-  # Set the boot/esp flags on the boot partition
-  parted "${DISK}" set 1 boot on
-  # Create a single ext4 root partition
-  parted "${DISK}" -s mkpart root 500MiB 100%
-  # Format the boot partition
-  mkfs.fat -F32 "${DISK}1"
+_setup_luks_lvm() {
   _warn "Setting up disk encryption. Confirmation and password entry required"
   # luksFormat the root partition
   cryptsetup luksFormat "${DISK}2"
@@ -70,30 +43,58 @@ _partition_uefi_encrypted_ext4() {
   pvcreate /dev/mapper/cryptlvm
   vgcreate vg /dev/mapper/cryptlvm
   lvcreate -l 100%FREE vg -n root
-  _info "Formatting volumes"
-  # Format the root partition as ext4
-  mkfs.ext4 /dev/vg/root
+}
+
+_partition_uefi_ext4() {
+  # Create a 500MiB FAT32 Boot Partition
+  parted "${DISK}" -s mkpart boot fat32 0% 500MiB
+  # Set the boot/esp flags on the boot partition
+  parted "${DISK}" set 1 boot on
+  # Create a single ext4 root partition
+  parted "${DISK}" -s mkpart root ext4 500MiB 100%
+  # Format the boot partition
+  mkfs.fat -F32 "${DISK}1"
+  
+  if [[ "${ENCRYPTED}" == "true" ]]; then
+    # Setup the LUKS/LVM containers
+    _setup_luks_lvm
+    root_part="/dev/vg/root"
+  else
+    root_part="${DISK}2"
+  fi
+  
+  # Format the root partition
+  mkfs.ext4 "${root_part}"
   # Mount the root partition to /mnt
-  mount /dev/vg/root /mnt
+  mount "${root_part}" /mnt
   # Create the mount point for boot
   mkdir -p /mnt/boot
   # Mount the boot partition
   mount "${DISK}1" /mnt/boot
 }
 
-_partition_bios_basic_ext4() {
+_partition_bios_ext4() {
   # Create the BIOS boot partition
   parted "${DISK}" -s mkpart bios 0% 2
   # Set the bios_grub flag on the boot partition
   parted "${DISK}" set 1 bios_grub on
   # Create a single ext4 root partition
-  parted "${DISK}" -s mkpart root ext4 2 100%
+  parted "${DISK}" -s mkpart root 2 100%
   # Set the boot flag on the root partition
   parted "${DISK}" set 2 boot on
+
+  if [[ "${ENCRYPTED}" == "true" ]]; then
+    # Setup the LUKS/LVM containers
+    _setup_luks_lvm
+    root_part="/dev/vg/root"
+  else
+    root_part="${DISK}2"
+  fi
+
   # Format the root partition
-  mkfs.ext4 "${DISK}2"
+  mkfs.ext4 "${root_part}"
   # Mount the root partition to /mnt
-  mount "${DISK}2" /mnt
+  mount "${root_part}" /mnt
 }
 
 _partition_and_mount() {
@@ -103,16 +104,14 @@ _partition_and_mount() {
   fi
   # Create a new partition table
   parted "${DISK}" -s mklabel gpt
+  
   # Check if we're on a BIOS/UEFI system
   if _check_efi; then
-    if [[ "${ENCRYPTED}" == "true" ]]; then
-      _partition_uefi_encrypted_ext4
-    else
-      _partition_uefi_basic_ext4
-    fi
+    _partition_uefi_ext4
   else
-    _partition_bios_basic_ext4
+    _partition_bios_ext4
   fi
+
   # Create the etc directory
   mkdir /mnt/etc
   # Generate the fstab file
