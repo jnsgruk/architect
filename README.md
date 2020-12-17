@@ -11,6 +11,7 @@ This project not finished, but currently a simple set of shell scripts/templated
 - Detect requirement for, and if necessary install microcode packages
 - Create a non-root user and enable `sudo` access
 - Install and enable NetworkManager
+- Install [yay](https://gtihub.com/Jguer/yay)
 
 ## Getting Started
 
