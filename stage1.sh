@@ -12,7 +12,7 @@ _main() {
   cp -r /architect /mnt/architect
 
   _info "Chrooting and running stage 2"
-  arch-chroot /mnt /stage2.sh
+  arch-chroot /mnt /architect/stage2.sh
 
   _info "Cleaning up and rebooting"
   rm -rf /architect
