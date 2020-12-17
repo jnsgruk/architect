@@ -8,9 +8,7 @@ export KEYMAP="${KEYMAP:-uk}"
 export NEWHOSTNAME="${NEWHOSTNAME:-archie}"
 export NEWUSER="${NEWUSER:-jon}"
 
-export BASE_URL="http://192.168.122.1:8000"
-
-# export BASE_URL="https://raw.githubusercontent.com/jnsgruk/architect/master"
+export BASE_URL="https://raw.githubusercontent.com/jnsgruk/architect/master"
 
 _main() {
   # Get the common script for functions

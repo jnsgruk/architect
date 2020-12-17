@@ -6,7 +6,8 @@ _main() {
   
   _set_locale
   _set_hostname
-  
+  _misc_config
+
   _install_microcode
   _install_bootloader
   _setup_boot
@@ -34,6 +35,11 @@ _set_hostname() {
   curl -sLo /etc/hosts "${BASE_URL}/templates/hosts"
   # Update the template hosts file with selected hostname
   sed -i -e "s/:HOSTNAME:/${NEWHOSTNAME}/g" /etc/hosts
+}
+
+_misc_config() {
+  # Configure pacman to use color in output
+  sed -i "s/#Color/Color/g" /etc/pacman.conf
 }
 
 _install_microcode() {
