@@ -41,6 +41,7 @@ Coming soon...
 
 - [ ] Enable option settings with a JSON/YAML file
 - [ ] Enable customisation of installed packages
+- [ ] Add option to provide URL to post-provision script
 - [ ] Presets for desktop environments:
   - [ ] Gnome
   - [ ] Plasma

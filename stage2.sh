@@ -12,6 +12,9 @@ _main() {
   _install_bootloader
   _setup_boot
   _setup_users
+
+  # Run stage 3 for additional packages and customisation
+  /bin/bash /architect/stage3.sh
 }
 
 _set_locale() {

@@ -16,7 +16,7 @@ _bootstrap() {
   pacman -Syy --noconfirm git
   # Clone the rest of architect
   _info "Fetching latest version of architect"
-  git clone --depth 1 https://github.com/jnsgruk/architect /architect
+  git clone --depth 1 -b "${ARCHITECT_BRANCH:-master}" https://github.com/jnsgruk/architect /architect
   # Configure architect
   _info "Configuring architect"
   _configure

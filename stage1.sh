@@ -15,8 +15,9 @@ _main() {
   chmod +x /architect/stage2.sh
   arch-chroot /mnt /architect/stage2.sh
 
-  _info "Cleaning up and rebooting"
-  rm -rf /mnt/architect
+  _cleanup
+  
+  _info "Rebooting"
   umount -R /mnt
   reboot 0
 }
@@ -93,10 +94,18 @@ _pacstrap() {
     curl
     wget
     networkmanager
+    git
   )
   # Pacstrap the system with the base packages above
   _info "Bootstrapping baseline Arch Linux system"
   pacstrap /mnt "${PACSTRAP_PACKAGES[@]}"
+}
+
+_cleanup() {
+  _info "Cleaning up"
+  rm -rf /mnt/architect
+  rm -rf /etc/sudoers.d/99-architect-build
+  userdel -rf architect
 }
 
 _main
