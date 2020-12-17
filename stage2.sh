@@ -54,10 +54,10 @@ _setup_mkinitcpio() {
     pacman -S --noconfirm lvm2
     if [[ "${FILESYSTEM}" == "ext4" ]]; then
       # Copy across the modified mkinitcpio.conf
-      cp /architect/mkinitcpio_encryptedext4.conf /etc/mkinitcpio.conf
-    elif [[ "${FILESYSTEM}" == "ext4" ]]; then
+      cp /architect/templates/mkinitcpio_encrypted_ext4.conf /etc/mkinitcpio.conf
+    elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
       # Copy across the modified mkinitcpio.conf
-      cp /architect/mkinitcpio_encryptedbtrfs.conf /etc/mkinitcpio.conf
+      cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
     fi
     # Regenerate the initramfs
     mkinitcpio -p linux
@@ -100,7 +100,7 @@ _install_bootloader() {
       if [[ "${FILESYSTEM}" == "ext4" ]]; then
         # Copy across the modified mkinitcpio.conf
         cp /architect/mkinitcpio_encryptedext4.conf /etc/mkinitcpio.conf
-      elif [[ "${FILESYSTEM}" == "ext4" ]]; then
+      elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
         # Copy across the modified mkinitcpio.conf
         cp /architect/mkinitcpio_encryptedbtrfs.conf /etc/mkinitcpio.conf
       fi
