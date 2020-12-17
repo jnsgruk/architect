@@ -20,7 +20,7 @@ To use this script, boot into the Arch ISO and run:
 # Download the stage1.sh script
 $ curl -sLo architect.sh https://jnsgr.uk/architect
 # Set a disk to install to, and run the installer
-$ DISK=/dev/vda /bin/bash stage1.sh
+$ DISK=/dev/vda /bin/bash architect.sh
 ```
 
 Additional options can be specified as environment variables:
