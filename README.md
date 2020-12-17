@@ -25,13 +25,15 @@ $ DISK=/dev/vda /bin/bash architect.sh
 
 Additional options can be specified as environment variables:
 
-|     Name      |  Format  |     Default     | Comment                       |
-| :-----------: | :------: | :-------------: | ----------------------------- |
-| `NEWHOSTNAME` | `string` |    `archie`     | Hostname of installed system. |
-|   `NEWUSER`   | `string` |      `jon`      | Non-root user to create.      |
-|   `LOCALE`    | `string` |  `en_GB.UTF-8`  | Locale to use.                |
-|     `TZ`      | `string` | `Europe/London` | Timezone to configure.        |
-|   `KEYMAP`    | `string` |      `uk`       | Keyboard layout to configure. |
+|        Name        |  Format  |     Default     | Comment                           |
+| :----------------: | :------: | :-------------: | --------------------------------- |
+|       `DISK`       | `string` |   `/dev/vda`    | Disk to install to.               |
+|   `NEWHOSTNAME`    | `string` |    `archie`     | Hostname of installed system.     |
+|     `NEWUSER`      | `string` |      `jon`      | Non-root user to create.          |
+|      `LOCALE`      | `string` |  `en_GB.UTF-8`  | Locale to use.                    |
+|        `TZ`        | `string` | `Europe/London` | Timezone to configure.            |
+|      `KEYMAP`      | `string` |      `uk`       | Keyboard layout to configure.     |
+| `ARCHITECT_BRANCH` | `string` |    `master`     | Branch of this repo to pull from. |
 
 These should be prepended to the install command, as is shown with the `DISK` variable above, or sourced from a `dotenv` file.
 
@@ -52,5 +54,5 @@ Coming soon...
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
 - [x] Non-EFI bootloader install with GRUB
-- [ ] Install and configure `yay`
+- [x] Install and configure `yay`
 - [ ] Configure a swapfile

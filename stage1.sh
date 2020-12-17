@@ -16,7 +16,7 @@ _main() {
   arch-chroot /mnt /architect/stage2.sh
 
   _cleanup
-  
+
   _info "Rebooting"
   umount -R /mnt
   reboot 0
@@ -104,8 +104,6 @@ _pacstrap() {
 _cleanup() {
   _info "Cleaning up"
   rm -rf /mnt/architect
-  rm -rf /etc/sudoers.d/99-architect-build
-  userdel -rf architect
 }
 
 _main

@@ -5,6 +5,7 @@ _main() {
   source /architect/architect.sh
   
   _setup_yay
+  _cleanup
 }
 
 _setup_yay() {
@@ -21,6 +22,12 @@ _setup_yay() {
   cd /tmp/yay || exit 1
   sudo -u architect makepkg -si --noconfirm
   cd / || exit 1
+}
+
+_cleanup() {
+  _info "Cleaning up build user and sudo config"
+  rm -rf /etc/sudoers.d/99-architect-build
+  userdel -rf architect
 }
 
 _main
