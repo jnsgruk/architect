@@ -30,7 +30,7 @@ _preamble() {
   timedatectl set-ntp true
 }
 
-_partition_bios_basic_ext4() {
+_partition_uefi_basic_ext4() {
   # Create a 500MiB FAT32 Boot Partition
   parted "${DISK}" -s mkpart boot fat32 0% 500MiB
   # Set the boot/esp flags on the boot partition
@@ -49,7 +49,39 @@ _partition_bios_basic_ext4() {
   mount "${DISK}1" /mnt/boot
 }
 
-_partition_uefi_basic_ext4() {
+_partition_uefi_encrypted_ext4() {
+  # Create a 500MiB FAT32 Boot Partition
+  parted "${DISK}" -s mkpart boot fat32 0% 500MiB
+  # Set the boot/esp flags on the boot partition
+  parted "${DISK}" set 1 boot on
+  # Create a single ext4 root partition
+  parted "${DISK}" -s mkpart root 500MiB 100%
+  # Format the boot partition
+  mkfs.fat -F32 "${DISK}1"
+  _warn "Setting up disk encryption. Confirmation and password entry required"
+  # luksFormat the root partition
+  cryptsetup luksFormat "${DISK}2"
+  _warn "Decrypting disk, password entry required"
+  # Open the encrypted container
+  cryptsetup open "${DISK}2" cryptlvm
+  # Setup LVM physical volumes, volume groups and logical volumes
+  _info "Setting up LVM"
+  # Create a physical volume
+  pvcreate /dev/mapper/cryptlvm
+  vgcreate vg /dev/mapper/cryptlvm
+  lvcreate -l 100%FREE vg -n root
+  _info "Formatting volumes"
+  # Format the root partition as ext4
+  mkfs.ext4 /dev/vg/root
+  # Mount the root partition to /mnt
+  mount /dev/vg/root /mnt
+  # Create the mount point for boot
+  mkdir -p /mnt/boot
+  # Mount the boot partition
+  mount "${DISK}1" /mnt/boot
+}
+
+_partition_bios_basic_ext4() {
   # Create the BIOS boot partition
   parted "${DISK}" -s mkpart bios 0% 2
   # Set the bios_grub flag on the boot partition
@@ -73,9 +105,13 @@ _partition_and_mount() {
   parted "${DISK}" -s mklabel gpt
   # Check if we're on a BIOS/UEFI system
   if _check_efi; then
-    _partition_bios_basic_ext4
+    if [[ "${ENCRYPTED}" == "true" ]]; then
+      _partition_uefi_encrypted_ext4
+    else
+      _partition_uefi_basic_ext4
+    fi
   else
-    _partition_uefi_basic_ext4
+    _partition_bios_basic_ext4
   fi
   # Create the etc directory
   mkdir /mnt/etc
