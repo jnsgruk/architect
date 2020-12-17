@@ -39,17 +39,17 @@ These should be prepended to the install command, as is shown with the `DISK` va
 
 Coming soon...
 
-- [] Enable option settings with a JSON/YAML file
-- [] Enable customisation of installed packages
-- [] Presets for desktop environments:
-  - [] Gnome
-  - [] Plasma
-  - [] XFCE
-  - [] MATE
+- [ ] Enable option settings with a JSON/YAML file
+- [ ] Enable customisation of installed packages
+- [ ] Presets for desktop environments:
+  - [ ] Gnome
+  - [ ] Plasma
+  - [ ] XFCE
+  - [ ] MATE
 - Update disk partitioning to include:
-  - [] LVM/LUKS with ext4
-  - [] btrfs
-  - [] LVM/LUKS with btrfs
+  - [ ] LVM/LUKS with ext4
+  - [ ] btrfs
+  - [ ] LVM/LUKS with btrfs
 - [x] Non-EFI bootloader install with GRUB
-- [] Install and configure `yay`
-- [] Configure a swapfile
+- [ ] Install and configure `yay`
+- [ ] Configure a swapfile
