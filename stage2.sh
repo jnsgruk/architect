@@ -98,17 +98,11 @@ _install_bootloader() {
     # Check if the setup uses an encrypted disk
     if [[ "${ENCRYPTED}" == "true" ]]; then
       if [[ "${FILESYSTEM}" == "ext4" ]]; then
-        # Copy across the modified mkinitcpio.conf
-        cp /architect/mkinitcpio_encryptedext4.conf /etc/mkinitcpio.conf
+        # Add a line to the bootloader config
+        echo "options cryptdevice=/dev/disk/by-partlabel/root:cryptlvm root=/dev/vg/root rw" >> /boot/loader/entries/arch.conf
       elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
-        # Copy across the modified mkinitcpio.conf
-        cp /architect/mkinitcpio_encryptedbtrfs.conf /etc/mkinitcpio.conf
+        _error "Not implmented"
       fi
-      # Regenerate the initramfs
-      mkinitcpio -p linux
-      
-      # Add a line to the bootloader config
-      echo "options cryptdevice=/dev/disk/by-partlabel/root:cryptlvm root=/dev/vg/root rw" >> /boot/loader/entries/arch.conf
     else
       # Add the standard boot line to the bootloader if not encrypted
       echo "options root=/dev/disk/by-partlabel/root rw" >> /boot/loader/entries/arch.conf
