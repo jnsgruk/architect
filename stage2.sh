@@ -114,7 +114,9 @@ _install_bootloader() {
 
     # If encrypted, then copy our modified grub defaults
     if [[ "${ENCRYPTED}" == "true" ]]; then
-      cp /architect/templates/grub.default /etc/default/grub
+    sed -e "s/:UUID:/$(blkid ${DISK}2 -s UUID -o value)/g" \
+        -e "s/:PARTUUID:/$(blkid ${DISK}2 -s UUID -o value)/g" \
+        /architect/templates/grub.default > /architect/templates/grub.default /etc/default/grub
     fi
 
     grub-install --target=i386-pc --recheck "${DISK}"
