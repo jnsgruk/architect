@@ -120,18 +120,7 @@ _partition_and_mount() {
 }
 
 _pacstrap() {
-  PACSTRAP_PACKAGES=(
-    base
-    base-devel
-    linux
-    linux-firmware
-    sudo
-    vim
-    curl
-    wget
-    networkmanager
-    git
-  )
+  PACSTRAP_PACKAGES=(base linux linux-firmware sudo networkmanager)
   # Pacstrap the system with the base packages above
   _info "Bootstrapping baseline Arch Linux system"
   pacstrap /mnt "${PACSTRAP_PACKAGES[@]}"

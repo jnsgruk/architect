@@ -3,9 +3,21 @@
 _main() {
   # Source common fuctions to be used throughout
   source /architect/architect.sh
-  
+  _install_base_packages
   _setup_yay
   _cleanup
+}
+
+_install_base_packages() {
+  PACKAGES=(
+    git
+    htop
+    wget
+    curl
+    base-devel
+    vim
+  )
+  pacman -S --noconfirm "${PACKAGES[@]}"
 }
 
 _setup_yay() {
