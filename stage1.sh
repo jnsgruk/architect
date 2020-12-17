@@ -1,38 +1,21 @@
 #!/bin/bash
-set -euo pipefail
-
-export DISK="${DISK:-/dev/vda}"
-export TZ="${TZ:-Europe/London}"
-export LOCALE="${LOCALE:-en_GB.UTF-8}"
-export KEYMAP="${KEYMAP:-uk}"
-export NEWHOSTNAME="${NEWHOSTNAME:-archie}"
-export NEWUSER="${NEWUSER:-jon}"
-
-export BASE_URL="https://raw.githubusercontent.com/jnsgruk/architect/master"
 
 _main() {
-  # Get the common script for functions
-  curl -sLo /tmp/common.sh "${BASE_URL}/common.sh"
-  source /tmp/common.sh
-  
-  # Check for internet access and bail out if there isn't any!
-  if ! _check_online; then _error "Please connect to the internet"; fi
+  # Source some helper functions and config
+  source /architect/architect.sh
 
   _preamble
   _partition_and_mount
   _pacstrap
 
-  _info "Fetching stage 2 installer"
-  curl -sLo /mnt/stage2.sh "${BASE_URL}/stage2.sh"
-  chmod +x /mnt/stage2.sh
-  cp /tmp/common.sh /mnt/common.sh
+  _info "Copying architect into chroot"
+  cp -r /architect /mnt/architect
 
   _info "Chrooting and running stage 2"
   arch-chroot /mnt /stage2.sh
 
   _info "Cleaning up and rebooting"
-  rm /mnt/stage2.sh
-  rm /mnt/common.sh
+  rm -rf /architect
   umount -R /mnt
   reboot 0
 }

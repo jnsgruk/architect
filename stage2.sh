@@ -31,10 +31,8 @@ _set_locale() {
 _set_hostname() {
   _info "Configuring hostname"
   echo "${NEWHOSTNAME}" > /etc/hostname
-  # Get the template hosts file
-  curl -sLo /etc/hosts "${BASE_URL}/templates/hosts"
   # Update the template hosts file with selected hostname
-  sed -i -e "s/:HOSTNAME:/${NEWHOSTNAME}/g" /etc/hosts
+  sed -e "s/:HOSTNAME:/${NEWHOSTNAME}/g" /architect/templates/hosts > /etc/hosts
 }
 
 _misc_config() {
@@ -60,7 +58,7 @@ _install_bootloader() {
     # Install systemd-boot with default options
     bootctl install
     # Get the template bootloader config
-    curl -sLo /boot/loader/entries/arch.conf "${BASE_URL}/templates/arch.conf"
+    cp /architect/templates/arch.conf /boot/loader/entries/arch.conf
     # Add the microcode to the bootloader config if required
     if pacman -Qqe | grep -q intel-ucode; then 
       sed -i '2 a initrd  /intel-code.img' /boot/loader/entries/arch.conf
