@@ -2,7 +2,7 @@
 
 _main() {
   # Source common fuctions to be used throughout
-  source /common.sh
+  source /architect/architect.sh
   
   _set_locale
   _set_hostname

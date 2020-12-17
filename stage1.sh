@@ -16,7 +16,7 @@ _main() {
   arch-chroot /mnt /architect/stage2.sh
 
   _info "Cleaning up and rebooting"
-  rm -rf /architect
+  rm -rf /mnt/architect
   umount -R /mnt
   reboot 0
 }
