@@ -111,7 +111,13 @@ _install_bootloader() {
     _info "BIOS mode detected; installing and configuring GRUB"
     # Install grub
     pacman -S --noconfirm grub
-    grub-install --target=i386-pc "${DISK}"
+
+    # If encrypted, then copy our modified grub defaults
+    if [[ "${ENCRYPTED}" == "true" ]]; then
+      cp /architect/templates/grub.default /etc/grub/default
+    fi
+
+    grub-install --target=i386-pc --recheck "${DISK}"
     # Generate GRUB config; microcode updates should be detected automatically
     grub-mkconfig -o /boot/grub/grub.cfg
   fi
