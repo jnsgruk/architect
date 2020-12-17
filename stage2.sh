@@ -114,7 +114,7 @@ _install_bootloader() {
 
     # If encrypted, then copy our modified grub defaults
     if [[ "${ENCRYPTED}" == "true" ]]; then
-      cp /architect/templates/grub.default /etc/grub/default
+      cp /architect/templates/grub.default /etc/default/grub
     fi
 
     grub-install --target=i386-pc --recheck "${DISK}"
