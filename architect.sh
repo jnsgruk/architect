@@ -10,10 +10,7 @@ _error() { echo -e >&2 "\e[31m[!] ${1:-}\e[0m"; exit 1; }
 _bootstrap() {
   # Check for internet access and bail out if there isn't any!
   if ! _check_online; then _error "Please connect to the internet"; fi
-  # Download yq to parse config file
-  _info "Fetching yq tool to parse config"
-  curl -sLo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64
-  chmod 755 /usr/bin/yq
+  _install_yq
   # Configure architect
   _info "Configuring architect installer"
   _configure
@@ -25,6 +22,13 @@ _bootstrap() {
   git clone --depth 1 -b "$(_config_value architect.branch)" https://github.com/jnsgruk/architect /architect
   # Start stage 1 installer
   /bin/bash /architect/stage1.sh
+}
+
+_install_yq() {
+  # Download yq to parse config file
+  _info "Fetching yq tool to parse config"
+  curl -sLo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64
+  chmod 755 /usr/bin/yq
 }
 
 _configure() {

@@ -10,6 +10,7 @@ _main() {
 
   _info "Copying architect into chroot"
   cp -r /architect /mnt/architect
+  cp /usr/bin/yq /mnt/usr/bin/yq
 
   _info "Chrooting and running stage 2"
   chmod +x /architect/stage2.sh
@@ -132,6 +133,7 @@ _pacstrap() {
 _cleanup() {
   _info "Cleaning up"
   rm -rf /mnt/architect
+  rm /usr/bin/yq
 }
 
 _main
