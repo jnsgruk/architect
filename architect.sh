@@ -31,6 +31,9 @@ _configure() {
   export KEYMAP="${KEYMAP:-uk}"
   export NEWHOSTNAME="${NEWHOSTNAME:-archie}"
   export NEWUSER="${NEWUSER:-jon}"
+  export ENCRYPTED="${ENCRYPTED:-false}"
+  export FILESYSTEM="${FILESYSTEM:-ext4}"
+  export DISABLE_STAGE3="${DISABLE_STAGE3:-}"
 }
 
 _check_efi() {

@@ -8,13 +8,18 @@ _main() {
   _set_hostname
   _misc_config
 
+  _setup_mkinitcpio
+  
   _install_microcode
   _install_bootloader
   _setup_boot
   _setup_users
 
-  # Run stage 3 for additional packages and customisation
-  /bin/bash /architect/stage3.sh
+  # Check if stage 3 is enabled
+  if [[ -z "${DISABLE_STAGE3}" ]]; then
+    # Run stage 3 for additional packages and customisation
+    /bin/bash /architect/stage3.sh
+  fi
 }
 
 _set_locale() {
@@ -43,6 +48,36 @@ _misc_config() {
   sed -i "s/#Color/Color/g" /etc/pacman.conf
 }
 
+_setup_mkinitcpio() {
+  if [[ "${ENCRYPTED}" == "true" ]]; then
+    # Install the necessary utilities
+    pacman -S --noconfirm lvm2
+    if [[ "${FILESYSTEM}" == "ext4" ]]; then
+      if _check_efi; then
+        # Copy across the modified mkinitcpio.conf
+        cp /architect/templates/mkinitcpio_encrypted_ext4.conf /etc/mkinitcpio.conf
+      else
+        # Copy across the modified mkinitcpio.conf
+        cp /architect/templates/mkinitcpio_encrypted_ext4_grub.conf /etc/mkinitcpio.conf
+        # Generate a new keyfile for the luks partition
+        dd bs=512 count=4 if=/dev/random of=/root/cryptlvm.keyfile iflag=fullblock
+        # Set permissions on keyfile
+        chmod 000 /root/cryptlvm.keyfile
+        # Add the keyfile to luks
+        _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
+        cryptsetup -v luksAddKey "${DISK}2" /root/cryptlvm.keyfile
+      fi
+    elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
+      # Copy across the modified mkinitcpio.conf
+      cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
+    fi
+    # Regenerate the initramfs
+    mkinitcpio -p linux
+    # Ensure permissions are set on the initramfs to protect keyfile if present
+    chmod 600 /boot/initramfs-linux*
+  fi
+}
+
 _install_microcode() {
   if systemd-detect-virt; then
     _info "Virtualisation detected, skipping ucode installation"
@@ -60,19 +95,43 @@ _install_bootloader() {
     _info "EFI mode detected; installing and configuring systemd-boot"
     # Install systemd-boot with default options
     bootctl install
-    # Get the template bootloader config
-    cp /architect/templates/arch.conf /boot/loader/entries/arch.conf
+    # Start building the bootloader config
+    echo "title   Arch Linux" > /boot/loader/entries/arch.conf
+    echo "linux   /vmlinuz-linux" >> /boot/loader/entries/arch.conf
+    
     # Add the microcode to the bootloader config if required
     if pacman -Qqe | grep -q intel-ucode; then 
-      sed -i '2 a initrd  /intel-code.img' /boot/loader/entries/arch.conf
+      echo "initrd  /intel-code.img" >> /boot/loader/entries/arch.conf
     elif pacman -Qqe | grep -q amd-ucode; then 
-      sed -i '2 a initrd  /amd-code.img' /boot/loader/entries/arch.conf
+      echo "initrd  /amd-code.img" >> /boot/loader/entries/arch.conf
+    fi
+    
+    # Add the initramfs to the bootloader config
+    echo "initrd  /initramfs-linux.img" >> /boot/loader/entries/arch.conf
+    
+    # Check if the setup uses an encrypted disk
+    if [[ "${ENCRYPTED}" == "true" ]]; then
+      if [[ "${FILESYSTEM}" == "ext4" ]]; then
+        # Add a line to the bootloader config
+        echo "options cryptdevice=/dev/disk/by-partlabel/root:cryptlvm root=/dev/vg/root rw" >> /boot/loader/entries/arch.conf
+      elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
+        _error "Not implmented"
+      fi
+    else
+      # Add the standard boot line to the bootloader if not encrypted
+      echo "options root=/dev/disk/by-partlabel/root rw" >> /boot/loader/entries/arch.conf
     fi
   else
     _info "BIOS mode detected; installing and configuring GRUB"
     # Install grub
     pacman -S --noconfirm grub
-    grub-install --target=i386-pc "${DISK}"
+
+    # If encrypted, then copy our modified grub defaults
+    if [[ "${ENCRYPTED}" == "true" ]]; then
+      cp /architect/templates/grub.default /etc/default/grub
+    fi
+
+    grub-install --target=i386-pc --recheck "${DISK}"
     # Generate GRUB config; microcode updates should be detected automatically
     grub-mkconfig -o /boot/grub/grub.cfg
   fi
