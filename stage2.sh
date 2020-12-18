@@ -16,7 +16,7 @@ _main() {
   _setup_users
 
   # Check if stage 3 is enabled
-  if [[ -z "${DISABLE_STAGE3}" ]]; then
+  if [[ "$(_config_value architect.disable_stage3)" == "true" ]]; then
     # Run stage 3 for additional packages and customisation
     /bin/bash /architect/stage3.sh
   fi
@@ -25,22 +25,22 @@ _main() {
 _set_locale() {
   _info "Setup locale details and timezone"
   # Setup the timezone
-  ln -sf "/usr/share/zoneinfo/${TZ}" /etc/localtime
+  ln -sf "/usr/share/zoneinfo/$(_config_value regional.timezone)" /etc/localtime
   hwclock --systohc
   # Uncomment the selected locale from the locale.gen file
-  sed -i "s/#${LOCALE}/${LOCALE}/g" /etc/locale.gen
+  sed -i "s/#$(_config_value regional.locale)/$(_config_value regional.locale)/g" /etc/locale.gen
   # Regenerate the locales
   locale-gen
   # Set the default language and keymaps
-  echo "LANG=${LOCALE}" > /etc/locale.conf
-  echo "KEYMAP=${KEYMAP}" > /etc/vconsole.conf
+  echo "LANG=$(_config_value regional.locale)" > /etc/locale.conf
+  echo "KEYMAP=$(_config_value regional.keymap)" > /etc/vconsole.conf
 }
 
 _set_hostname() {
   _info "Configuring hostname"
-  echo "${NEWHOSTNAME}" > /etc/hostname
+  echo "$(_config_value hostname)" > /etc/hostname
   # Update the template hosts file with selected hostname
-  sed -e "s/:HOSTNAME:/${NEWHOSTNAME}/g" /architect/templates/hosts > /etc/hosts
+  sed -e "s/:HOSTNAME:/$(_config_value hostname)/g" /architect/templates/hosts > /etc/hosts
 }
 
 _misc_config() {
@@ -49,10 +49,10 @@ _misc_config() {
 }
 
 _setup_mkinitcpio() {
-  if [[ "${ENCRYPTED}" == "true" ]]; then
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
     # Install the necessary utilities
     pacman -S --noconfirm lvm2
-    if [[ "${FILESYSTEM}" == "ext4" ]]; then
+    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
       if _check_efi; then
         # Copy across the modified mkinitcpio.conf
         cp /architect/templates/mkinitcpio_encrypted_ext4.conf /etc/mkinitcpio.conf
@@ -65,9 +65,9 @@ _setup_mkinitcpio() {
         chmod 000 /root/cryptlvm.keyfile
         # Add the keyfile to luks
         _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
-        cryptsetup -v luksAddKey "${DISK}2" /root/cryptlvm.keyfile
+        cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
       fi
-    elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
+    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
       # Copy across the modified mkinitcpio.conf
       cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
     fi
@@ -110,11 +110,11 @@ _install_bootloader() {
     echo "initrd  /initramfs-linux.img" >> /boot/loader/entries/arch.conf
     
     # Check if the setup uses an encrypted disk
-    if [[ "${ENCRYPTED}" == "true" ]]; then
-      if [[ "${FILESYSTEM}" == "ext4" ]]; then
+    if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+      if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
         # Add a line to the bootloader config
         echo "options cryptdevice=/dev/disk/by-partlabel/root:cryptlvm root=/dev/vg/root rw" >> /boot/loader/entries/arch.conf
-      elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
+      elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
         _error "Not implmented"
       fi
     else
@@ -127,11 +127,11 @@ _install_bootloader() {
     pacman -S --noconfirm grub
 
     # If encrypted, then copy our modified grub defaults
-    if [[ "${ENCRYPTED}" == "true" ]]; then
+    if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
       cp /architect/templates/grub.default /etc/default/grub
     fi
 
-    grub-install --target=i386-pc --recheck "${DISK}"
+    grub-install --target=i386-pc --recheck "$(_config_value partitioning.disk)"
     # Generate GRUB config; microcode updates should be detected automatically
     grub-mkconfig -o /boot/grub/grub.cfg
   fi
@@ -141,11 +141,11 @@ _setup_users() {
   _warn "Changing root password; enter below:"
   # Change the root password
   passwd
-  _info "Creating a non-root user: ${NEWUSER}"
+  _info "Creating a non-root user: $(_config_value username)"
   # Create a new default user
-  useradd -m -s /bin/bash -G wheel "${NEWUSER}"
-  _warn "Enter password for ${NEWUSER}"
-  passwd "${NEWUSER}"
+  useradd -m -s /bin/bash -G wheel "$(_config_value username)"
+  _warn "Enter password for $(_config_value username)"
+  passwd "$(_config_value username)"
   # Uncomment a line from the /etc/sudoers file
   _info "Configuring sudo access for the wheel group"
   sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers

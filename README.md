@@ -89,7 +89,7 @@ Coming soon...
   - [ ] Plasma
   - [ ] XFCE
   - [ ] MATE
-- Update disk partitioning to include:
+- [ ] Update disk partitioning to include:
   - [x] LVM/LUKS with ext4
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
