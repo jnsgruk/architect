@@ -26,15 +26,18 @@ $ DISK=/dev/vda /bin/bash architect.sh
 
 Additional options can be specified as environment variables:
 
-|        Name        |  Format  |     Default     | Comment                           |
-| :----------------: | :------: | :-------------: | --------------------------------- |
-|       `DISK`       | `string` |   `/dev/vda`    | Disk to install to.               |
-|   `NEWHOSTNAME`    | `string` |    `archie`     | Hostname of installed system.     |
-|     `NEWUSER`      | `string` |      `jon`      | Non-root user to create.          |
-|      `LOCALE`      | `string` |  `en_GB.UTF-8`  | Locale to use.                    |
-|        `TZ`        | `string` | `Europe/London` | Timezone to configure.            |
-|      `KEYMAP`      | `string` |      `uk`       | Keyboard layout to configure.     |
-| `ARCHITECT_BRANCH` | `string` |    `master`     | Branch of this repo to pull from. |
+|        Name        |  Format  |     Default     | Comment                                                      |
+| :----------------: | :------: | :-------------: | ------------------------------------------------------------ |
+|       `DISK`       | `string` |   `/dev/vda`    | Disk to install to.                                          |
+|   `NEWHOSTNAME`    | `string` |    `archie`     | Hostname of installed system.                                |
+|     `NEWUSER`      | `string` |      `jon`      | Non-root user to create.                                     |
+|      `LOCALE`      | `string` |  `en_GB.UTF-8`  | Locale to use.                                               |
+|        `TZ`        | `string` | `Europe/London` | Timezone to configure.                                       |
+|      `KEYMAP`      | `string` |      `uk`       | Keyboard layout to configure.                                |
+| `ARCHITECT_BRANCH` | `string` |    `master`     | Branch of this repo to pull from.                            |
+|  `DISABLE_STAGE3`  | `string` |       ``        | Disable stage 3 of installer. Stops at "Minimum viable Arch" |
+|    `ENCRYPTED`     | `string` |     `false`     | Set to `true` to enable disk encryption                      |
+|    `FILESYSTEM`    | `string` |     `ext4`      | Select install filesystem. Supported options are: `ext4`     |
 
 These should be prepended to the install command, as is shown with the `DISK` variable above, or sourced from a `dotenv` file.
 
@@ -51,7 +54,7 @@ Coming soon...
   - [ ] XFCE
   - [ ] MATE
 - Update disk partitioning to include:
-  - [ ] LVM/LUKS with ext4
+  - [x] LVM/LUKS with ext4
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
 - [x] Non-EFI bootloader install with GRUB
