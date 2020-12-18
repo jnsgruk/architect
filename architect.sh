@@ -1,5 +1,5 @@
 #!/bin/bash 
-set -euo pipefail
+set -euxo pipefail
 # Output green message prefixed with [+]
 _info() { echo -e "\e[92m[+] ${1:-}\e[0m"; }
 # Output orange message prefixed with [-]
@@ -99,39 +99,41 @@ _find_default_config() {
     echo "/architect/presets/default.yml"
   elif [[ -f "${script_dir}/presets/default.yml" ]]; then
     echo "${script_dir}/presets/default.yml"
-  elif curl -sLo /tmp/architect_defaults.yml "https://raw.githubusercontent.com/jnsgruk/architect/master/presets/default.yml"; then
-    cat /tmp/architect_defaults.yml
+  elif curl -fsLo /tmp/architect_defaults.yml "https://raw.githubusercontent.com/jnsgruk/architect/master/presets/default.yml"; then
+    echo "/tmp/architect_defaults.yml"
   else
     _error "Could not find or download default config, please specify config as first argument and re-run this script"
   fi
 }
 
 # Check if there is an argument to the script
-if [[ -n "${1:-}" ]]; then
-  # If the first argument is a file, then set CONFIG to the filename
-  if [[ -f "${1}" ]]; then
-    export CONFIG="${1}"
-    _info "Using config specified at: ${1}"
-  
-  # Check if there is an Architect preset matching the first arg
-  elif curl -sLo "/tmp/${1}.yml" "https://raw.githubusercontent.com/jnsgruk/architect/master/presets/${1}.yml"; then
-    export CONFIG="/tmp/${1}.yml"
-    _info "Using architect preset config: ${1}"
-  
-  # Check if the specified argument is a valid URL to a user config
-  elif curl -sLo /architect/user_config.yml "${1}" && yq v /architect/config; then
-    export CONFIG="/architect/user_config.yml"
-    _info "Using config specified at: ${1}"
-  
-  # Unrecognised argument, try to get the default config
+if [[ -z "${CONFIG:-}" ]]; then
+  if [[ -n "${1:-}" ]]; then
+    # If the first argument is a file, then set CONFIG to the filename
+    if [[ -f "${1}" ]]; then
+      export CONFIG="${1}"
+      _info "Using config specified at: ${1}"
+    
+    # Check if there is an Architect preset matching the first arg
+    elif curl -fsLo "/tmp/${1}.yml" "https://raw.githubusercontent.com/jnsgruk/architect/master/presets/${1}.yml"; then
+      export CONFIG="/tmp/${1}.yml"
+      _info "Using architect preset config: ${1}"
+    
+    # Check if the specified argument is a valid URL to a user config
+    elif curl -fsLo /tmp/user_config.yml "${1}" && yq v /tmp/user_config.yml; then
+      export CONFIG="/tmp/user_config.yml"
+      _info "Using config specified at: ${1}"
+    
+    # Unrecognised argument, try to get the default config
+    else
+      export CONFIG="$(_find_default_config)"
+      _warn "No valid config specified, using defaults at ${CONFIG}"
+    fi
   else
+    # No arguments specified, use the default config
     export CONFIG="$(_find_default_config)"
-    _warn "No valid config specified, using defaults at ${CONFIG}"
+    _warn "No config specified, using defaults at ${CONFIG}"
   fi
-else
-  # No arguments specified, use the default config
-  export CONFIG="$(_find_default_config)"
-  _warn "No valid config specified, using defaults at ${CONFIG}"
 fi
 
 # Check if architect is already in the environment
