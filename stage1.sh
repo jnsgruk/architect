@@ -11,10 +11,6 @@ _main() {
   _info "Copying architect into chroot"
   cp -r /architect /mnt/architect
   cp /usr/bin/yq /mnt/usr/bin/yq
-  # Copy the user config into the chroot
-  cp "${CONFIG}" /mnt/architect/config.yml
-  # Reset the config variable to use the new path from now on
-  export CONFIG="/mnt/architect/config.yml"
 
   _info "Chrooting and running stage 2"
   chmod +x /architect/stage2.sh

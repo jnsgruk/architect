@@ -20,6 +20,10 @@ _bootstrap() {
   # Clone the rest of architect
   _info "Fetching latest version of architect"
   git clone --depth 1 -b "$(_config_value architect.branch)" https://github.com/jnsgruk/architect /architect
+  # Copy the config into the architect directory
+  cp "${CONFIG}" /architect/config.yml
+  # Reset the config variable to use the new path from now on
+  export CONFIG="/architect/config.yml"
   # Start stage 1 installer
   /bin/bash /architect/stage1.sh
 }
@@ -126,7 +130,7 @@ if [[ -z "${CONFIG:-}" ]]; then
       _info "Using architect preset config: ${1}"
     
     # Check if the specified argument is a valid URL to a user config
-    elif curl -fsLo /tmp/architect.yml "${1}" && yq v /tmp/architect.yml; then
+    elif curl -fsLo /tmp/architect.yml "${1}"; then
       export CONFIG="/tmp/architect.yml"
       _info "Using config specified at: ${1}"
     
