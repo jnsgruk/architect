@@ -53,14 +53,28 @@ _setup_mkinitcpio() {
     # Install the necessary utilities
     pacman -S --noconfirm lvm2
     if [[ "${FILESYSTEM}" == "ext4" ]]; then
-      # Copy across the modified mkinitcpio.conf
-      cp /architect/templates/mkinitcpio_encrypted_ext4.conf /etc/mkinitcpio.conf
+      if _check_efi; then
+        # Copy across the modified mkinitcpio.conf
+        cp /architect/templates/mkinitcpio_encrypted_ext4.conf /etc/mkinitcpio.conf
+      else
+        # Copy across the modified mkinitcpio.conf
+        cp /architect/templates/mkinitcpio_encrypted_ext4_grub.conf /etc/mkinitcpio.conf
+        # Generate a new keyfile for the luks partition
+        dd bs=512 count=4 if=/dev/random of=/root/cryptlvm.keyfile iflag=fullblock
+        # Set permissions on keyfile
+        chmod 000 /root/cryptlvm.keyfile
+        # Add the keyfile to luks
+        _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
+        cryptsetup -v luksAddKey "${DISK}2" /root/cryptlvm.keyfile
+      fi
     elif [[ "${FILESYSTEM}" == "btrfs" ]]; then
       # Copy across the modified mkinitcpio.conf
       cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
     fi
     # Regenerate the initramfs
     mkinitcpio -p linux
+    # Ensure permissions are set on the initramfs to protect keyfile if present
+    chmod 600 /boot/initramfs-linux*
   fi
 }
 
