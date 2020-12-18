@@ -22,8 +22,14 @@ To use this script, boot into the Arch ISO and run:
 $ curl -sLo architect.sh https://jnsgr.uk/architect
 # Install using defaults
 $ /bin/bash architect.sh
+```
+
+To install with other configuration files or presets:
+
+```bash
 # Install using config file downloaded to live ISO environment
 $ /bin/bash architect.sh /path/to/config.yml
+
 # Install using config file available at a URL
 $ /bin/bash architect.sh https://somedomain.com/your_config.yml
 ```
