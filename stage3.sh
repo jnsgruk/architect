@@ -9,15 +9,11 @@ _main() {
 }
 
 _install_base_packages() {
-  PACKAGES=(
-    git
-    htop
-    wget
-    curl
-    base-devel
-    vim
-  )
-  pacman -S --noconfirm "${PACKAGES[@]}"
+  # Convert the yaml packages list into a bash array
+  packages=($(_config_list provisioning.packages))
+  if [[ "${#packages[@]}" -gt 0 ]]; then
+    pacman -S --noconfirm "${packages[@]}"
+  fi
 }
 
 _setup_yay() {

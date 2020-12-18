@@ -10,6 +10,7 @@ _main() {
 
   _info "Copying architect into chroot"
   cp -r /architect /mnt/architect
+  cp /usr/bin/yq /mnt/usr/bin/yq
 
   _info "Chrooting and running stage 2"
   chmod +x /architect/stage2.sh
@@ -25,7 +26,7 @@ _main() {
 _preamble() {
   _info "Setting up keyboard layout and timezone"
   # Load a keymap based on env variable, default to uk
-  loadkeys "${KEYMAP}"
+  loadkeys "$(_config_value regional.keymap)"
   # Enable ntp
   timedatectl set-ntp true
 }
@@ -35,15 +36,15 @@ _setup_luks_lvm() {
   
   # luksFormat the root partition
   if _check_efi; then
-    cryptsetup luksFormat "${DISK}2"
+    cryptsetup luksFormat "$(_config_value partitioning.disk)2"
   else
     # If we're on a BIOS system, we use GRUB, which doesn't support LUKS2
-    cryptsetup luksFormat --type luks1 "${DISK}2"
+    cryptsetup luksFormat --type luks1 "$(_config_value partitioning.disk)2"
   fi
   
   _warn "Decrypting disk, password entry required"
   # Open the encrypted container
-  cryptsetup open "${DISK}2" cryptlvm
+  cryptsetup open "$(_config_value partitioning.disk)2" cryptlvm
   # Setup LVM physical volumes, volume groups and logical volumes
   _info "Setting up LVM"
   # Create a physical volume
@@ -54,20 +55,20 @@ _setup_luks_lvm() {
 
 _partition_uefi_ext4() {
   # Create a 500MiB FAT32 Boot Partition
-  parted "${DISK}" -s mkpart boot fat32 0% 500MiB
+  parted "$(_config_value partitioning.disk)" -s mkpart boot fat32 0% 500MiB
   # Set the boot/esp flags on the boot partition
-  parted "${DISK}" set 1 boot on
+  parted "$(_config_value partitioning.disk)" set 1 boot on
   # Create a single ext4 root partition
-  parted "${DISK}" -s mkpart root ext4 500MiB 100%
+  parted "$(_config_value partitioning.disk)" -s mkpart root ext4 500MiB 100%
   # Format the boot partition
-  mkfs.fat -F32 "${DISK}1"
+  mkfs.fat -F32 "$(_config_value partitioning.disk)1"
   
-  if [[ "${ENCRYPTED}" == "true" ]]; then
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
     # Setup the LUKS/LVM containers
     _setup_luks_lvm
     root_part="/dev/vg/root"
   else
-    root_part="${DISK}2"
+    root_part="$(_config_value partitioning.disk)2"
   fi
   
   # Format the root partition
@@ -77,25 +78,25 @@ _partition_uefi_ext4() {
   # Create the mount point for boot
   mkdir -p /mnt/boot
   # Mount the boot partition
-  mount "${DISK}1" /mnt/boot
+  mount "$(_config_value partitioning.disk)1" /mnt/boot
 }
 
 _partition_bios_ext4() {
   # Create the BIOS boot partition
-  parted "${DISK}" -s mkpart bios 0% 2
+  parted "$(_config_value partitioning.disk)" -s mkpart bios 0% 2
   # Set the bios_grub flag on the boot partition
-  parted "${DISK}" set 1 bios_grub on
+  parted "$(_config_value partitioning.disk)" set 1 bios_grub on
   # Create a single ext4 root partition
-  parted "${DISK}" -s mkpart root 2 100%
+  parted "$(_config_value partitioning.disk)" -s mkpart root 2 100%
   # Set the boot flag on the root partition
-  parted "${DISK}" set 2 boot on
+  parted "$(_config_value partitioning.disk)" set 2 boot on
 
-  if [[ "${ENCRYPTED}" == "true" ]]; then
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
     # Setup the LUKS/LVM containers
     _setup_luks_lvm
     root_part="/dev/vg/root"
   else
-    root_part="${DISK}2"
+    root_part="$(_config_value partitioning.disk)2"
   fi
 
   # Format the root partition
@@ -106,11 +107,8 @@ _partition_bios_ext4() {
 
 _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
-  if [[ -z "${DISK:-}" ]]; then
-    _error "No disk specified. Set the DISK environment variable."
-  fi
   # Create a new partition table
-  parted "${DISK}" -s mklabel gpt
+  parted "$(_config_value partitioning.disk)" -s mklabel gpt
   
   # Check if we're on a BIOS/UEFI system
   if _check_efi; then
@@ -126,15 +124,16 @@ _partition_and_mount() {
 }
 
 _pacstrap() {
-  PACSTRAP_PACKAGES=(base linux linux-firmware sudo networkmanager)
+  pacstrap_packages=(base linux linux-firmware sudo networkmanager)
   # Pacstrap the system with the base packages above
   _info "Bootstrapping baseline Arch Linux system"
-  pacstrap /mnt "${PACSTRAP_PACKAGES[@]}"
+  pacstrap /mnt "${pacstrap_packages[@]}"
 }
 
 _cleanup() {
   _info "Cleaning up"
   rm -rf /mnt/architect
+  rm /usr/bin/yq
 }
 
 _main

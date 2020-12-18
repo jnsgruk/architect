@@ -1,0 +1,31 @@
+---
+hostname: archie
+username: user
+
+regional:
+  locale: en_GB.UTF-8
+  timezone: Europe/London
+  keymap: uk
+
+partitioning:
+  disk: /dev/vda
+  # Currently, only ext4 is supported
+  filesystem: ext4
+  # If set to true, disk is encrypted with LVM-on-LUKS
+  encrypted: false
+
+provisioning:
+  # List of packages to install
+  packages:
+    - git
+    - htop
+    - wget
+    - curl
+    - base-devel
+    - vim
+
+architect:
+  # Choose the branch of Architect to clone during install
+  branch: master
+  # Option to disable the provisioning stage
+  disable_stage3: false
