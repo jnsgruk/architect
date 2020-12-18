@@ -26,20 +26,56 @@ $ DISK=/dev/vda /bin/bash architect.sh
 
 Additional options can be specified as environment variables:
 
-|        Name        |  Format  |     Default     | Comment                                                      |
-| :----------------: | :------: | :-------------: | ------------------------------------------------------------ |
-|       `DISK`       | `string` |   `/dev/vda`    | Disk to install to.                                          |
-|   `NEWHOSTNAME`    | `string` |    `archie`     | Hostname of installed system.                                |
-|     `NEWUSER`      | `string` |      `jon`      | Non-root user to create.                                     |
-|      `LOCALE`      | `string` |  `en_GB.UTF-8`  | Locale to use.                                               |
-|        `TZ`        | `string` | `Europe/London` | Timezone to configure.                                       |
-|      `KEYMAP`      | `string` |      `uk`       | Keyboard layout to configure.                                |
-| `ARCHITECT_BRANCH` | `string` |    `master`     | Branch of this repo to pull from.                            |
-|  `DISABLE_STAGE3`  | `string` |       ``        | Disable stage 3 of installer. Stops at "Minimum viable Arch" |
-|    `ENCRYPTED`     | `string` |     `false`     | Set to `true` to enable disk encryption                      |
-|    `FILESYSTEM`    | `string` |     `ext4`      | Select install filesystem. Supported options are: `ext4`     |
+|        Name        |  Format  |     Default     | Comment                                                  |
+| :----------------: | :------: | :-------------: | -------------------------------------------------------- |
+|       `DISK`       | `string` |   `/dev/vda`    | Disk to install to.                                      |
+|   `NEWHOSTNAME`    | `string` |    `archie`     | Hostname of installed system.                            |
+|     `NEWUSER`      | `string` |      `jon`      | Non-root user to create.                                 |
+|      `LOCALE`      | `string` |  `en_GB.UTF-8`  | Locale to use.                                           |
+|        `TZ`        | `string` | `Europe/London` | Timezone to configure.                                   |
+|      `KEYMAP`      | `string` |      `uk`       | Keyboard layout to configure.                            |
+| `ARCHITECT_BRANCH` | `string` |    `master`     | Branch of this repo to pull from.                        |
+|  `DISABLE_STAGE3`  | `string` |                 | Disable stage 3 of installer. Set to `true` if required  |
+|    `ENCRYPTED`     | `string` |     `false`     | Set to `true` to enable disk encryption                  |
+|    `FILESYSTEM`    | `string` |     `ext4`      | Select install filesystem. Supported options are: `ext4` |
 
 These should be prepended to the install command, as is shown with the `DISK` variable above, or sourced from a `dotenv` file.
+
+## Install Stages Description
+
+### Stage 1
+
+Stage 1 is the pre-chroot setup. It includes the following:
+
+- Keyboard layout setup
+- Partitioning and disk encryption if enabled
+- Mounting new filesystem under `/mnt`
+- Running `pacstrap` to install base packages into new filesystem
+- Runs `arch-chroot` and invokes stage 2
+
+### Stage 2
+
+Stage 2 happens inside the `chroot` environment. It includes the following:
+
+- Setup locale
+- Set hostname
+- Configure and generate `initramfs`
+- Install processor microcode if required
+- Install and configure bootloader
+- Change root password
+- Create a non-root user
+- Configure `sudo` for non-root user
+- Invoke stage 3 if enabled
+
+Once stage 2 is complete, the bare minimum install is complete. You can disable stage 3, reboot and enjoy your very minimal Arch Linux setup.
+
+### Stage 3
+
+Stage 3 aims to raise the install from "minimum viable arch" to a more usable system:
+
+- Install more packages
+- Install and configure the `yay` AUR helper
+- More soon!
 
 ## TODO/Contributing
 
