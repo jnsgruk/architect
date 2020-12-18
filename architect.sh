@@ -113,7 +113,7 @@ _find_default_config() {
 # Check if there is an argument to the script
 if [[ -z "${CONFIG:-}" ]]; then
   # Remove any old (downloaded) config files
-  rm /tmp/architect.yml
+  rm -f /tmp/architect.yml
   if [[ -n "${1:-}" ]]; then
     # If the first argument is a file, then set CONFIG to the filename
     if [[ -f "${1}" ]]; then
