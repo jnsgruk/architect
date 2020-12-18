@@ -20,26 +20,57 @@ To use this script, boot into the Arch ISO and run:
 ```bash
 # Download the stage1.sh script
 $ curl -sLo architect.sh https://jnsgr.uk/architect
-# Set a disk to install to, and run the installer
-$ DISK=/dev/vda /bin/bash architect.sh
+# Install using defaults
+$ /bin/bash architect.sh
+# Install using config file downloaded to live ISO environment
+$ /bin/bash architect.sh /path/to/config.yml
+# Install using config file available at a URL
+$ /bin/bash architect.sh https://somedomain.com/your_config.yml
 ```
 
-Additional options can be specified as environment variables:
+With no arguments, the installer will use the [default preset](./presets/default.yml). Default values are:
 
-|        Name        |  Format  |     Default     | Comment                                                  |
-| :----------------: | :------: | :-------------: | -------------------------------------------------------- |
-|       `DISK`       | `string` |   `/dev/vda`    | Disk to install to.                                      |
-|   `NEWHOSTNAME`    | `string` |    `archie`     | Hostname of installed system.                            |
-|     `NEWUSER`      | `string` |      `jon`      | Non-root user to create.                                 |
-|      `LOCALE`      | `string` |  `en_GB.UTF-8`  | Locale to use.                                           |
-|        `TZ`        | `string` | `Europe/London` | Timezone to configure.                                   |
-|      `KEYMAP`      | `string` |      `uk`       | Keyboard layout to configure.                            |
-| `ARCHITECT_BRANCH` | `string` |    `master`     | Branch of this repo to pull from.                        |
-|  `DISABLE_STAGE3`  | `string` |                 | Disable stage 3 of installer. Set to `true` if required  |
-|    `ENCRYPTED`     | `string` |     `false`     | Set to `true` to enable disk encryption                  |
-|    `FILESYSTEM`    | `string` |     `ext4`      | Select install filesystem. Supported options are: `ext4` |
+```yml
+---
+hostname: archie
+username: user
 
-These should be prepended to the install command, as is shown with the `DISK` variable above, or sourced from a `dotenv` file.
+regional:
+  locale: en_GB.UTF-8
+  timezone: Europe/London
+  keymap: uk
+
+partitioning:
+  disk: /dev/vda
+  # Currently, only ext4 is supported
+  filesystem: ext4
+  # If set to true, disk is encrypted with LVM-on-LUKS
+  encrypted: false
+
+provisioning:
+  # List of packages to install
+  packages:
+    - git
+    - htop
+    - wget
+    - curl
+    - base-devel
+    - vim
+
+architect:
+  # Choose the branch of Architect to clone during install
+  branch: master
+  # Option to disable the provisioning stage
+  disable_stage3: false
+```
+
+It is possible to specify a smaller config file to just override specific values in the defaults, for example:
+
+```yml
+---
+username: bob
+hostname: archbox
+```
 
 ## Install Stages Description
 
@@ -81,8 +112,7 @@ Stage 3 aims to raise the install from "minimum viable arch" to a more usable sy
 
 Coming soon...
 
-- [ ] Enable option settings with a JSON/YAML file
-- [ ] Enable customisation of installed packages
+- [ ] Configure a swapfile
 - [ ] Add option to provide URL to post-provision script
 - [ ] Presets for desktop environments:
   - [ ] Gnome
@@ -90,9 +120,10 @@ Coming soon...
   - [ ] XFCE
   - [ ] MATE
 - [ ] Update disk partitioning to include:
-  - [x] LVM/LUKS with ext4
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
+  - [x] LVM/LUKS with ext4
 - [x] Non-EFI bootloader install with GRUB
+- [x] Enable option settings with a JSON/YAML file
+- [x] Enable customisation of installed packages
 - [x] Install and configure `yay`
-- [ ] Configure a swapfile
