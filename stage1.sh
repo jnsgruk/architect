@@ -32,8 +32,15 @@ _preamble() {
 
 _setup_luks_lvm() {
   _warn "Setting up disk encryption. Confirmation and password entry required"
+  
   # luksFormat the root partition
-  cryptsetup luksFormat "${DISK}2"
+  if _check_efi; then
+    cryptsetup luksFormat "${DISK}2"
+  else
+    # If we're on a BIOS system, we use GRUB, which doesn't support LUKS2
+    cryptsetup luksFormat --type luks1 "${DISK}2"
+  fi
+  
   _warn "Decrypting disk, password entry required"
   # Open the encrypted container
   cryptsetup open "${DISK}2" cryptlvm
