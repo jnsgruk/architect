@@ -17,7 +17,7 @@ _main() {
   _setup_users
 
   # Check if stage 3 is enabled
-  if [[ "$(_config_value architect.disable_stage3)" == "true" ]]; then
+  if [[ "$(_config_value architect.disable_stage3)" != "true" ]]; then
     # Run stage 3 for additional packages and customisation
     /bin/bash /architect/stage3.sh
   fi
