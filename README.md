@@ -120,12 +120,15 @@ Coming soon...
 
 - [ ] Configure a swapfile
 - [ ] Add option to provide URL to post-provision script
-- [ ] Presets for desktop environments:
+- [ ] Migrate to `systemd` hooks in `mkinitcpio`?
+- [ ] Install and configure Plymouth with flicker-free boot
+- Presets for desktop environments:
+  - [ ] Prereq: Configure Xorg and display drivers
   - [ ] Gnome
   - [ ] Plasma
   - [ ] XFCE
   - [ ] MATE
-- [ ] Update disk partitioning to include:
+- Update disk partitioning to include:
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
   - [x] LVM/LUKS with ext4
