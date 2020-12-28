@@ -52,6 +52,8 @@ partitioning:
   filesystem: ext4
   # If set to true, disk is encrypted with LVM-on-LUKS
   encrypted: false
+  # Swapfile size in MiB. Set to zero to disable swap
+  swap: 1024
 
 provisioning:
   # List of packages to install
@@ -98,6 +100,7 @@ Stage 2 happens inside the `chroot` environment. It includes the following:
 - Set hostname
 - Configure and generate `initramfs`
 - Install processor microcode if required
+- Configure a swapfile
 - Install and configure bootloader
 - Change root password
 - Create a non-root user
@@ -118,13 +121,16 @@ Stage 3 aims to raise the install from "minimum viable arch" to a more usable sy
 
 Coming soon...
 
-- [ ] Configure a swapfile
 - [ ] Add option to provide URL to post-provision script
 - [ ] Migrate to `systemd` hooks in `mkinitcpio`?
-- [ ] Configure TRIM properly if on a supported SSD
+- Configure TRIM properly if on a supported SSD
+  - [ ] Detect SSD and TRIM support
+  - [ ] TRIM for ext4
+  - [ ] TRIM for btrfs
+  - [ ] TRIM for swapfile
 - [ ] Install and configure Plymouth with flicker-free boot
 - Presets for desktop environments:
-  - [ ] Prereq: Configure Xorg and display drivers
+  - [ ] Configure/detect display drivers
   - [ ] Gnome
   - [ ] Plasma
   - [ ] XFCE
@@ -133,6 +139,7 @@ Coming soon...
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
   - [x] LVM/LUKS with ext4
+- [x] Configure a swapfile
 - [x] Non-EFI bootloader install with GRUB
 - [x] Enable option settings with a JSON/YAML file
 - [x] Enable customisation of installed packages

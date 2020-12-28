@@ -13,6 +13,8 @@ partitioning:
   filesystem: ext4
   # If set to true, disk is encrypted with LVM-on-LUKS
   encrypted: false
+  # Swapfile size in MiB. Set to zero to disable swap
+  swap: 1024
 
 provisioning:
   # List of packages to install
