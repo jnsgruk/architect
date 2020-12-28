@@ -121,6 +121,7 @@ Coming soon...
 - [ ] Configure a swapfile
 - [ ] Add option to provide URL to post-provision script
 - [ ] Migrate to `systemd` hooks in `mkinitcpio`?
+- [ ] Configure TRIM properly if on a supported SSD
 - [ ] Install and configure Plymouth with flicker-free boot
 - Presets for desktop environments:
   - [ ] Prereq: Configure Xorg and display drivers
