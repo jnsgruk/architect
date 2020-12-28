@@ -4,6 +4,7 @@ _main() {
   # Source common fuctions to be used throughout
   source /architect/architect.sh
   _install_base_packages
+  _install_desktop
   _setup_yay
   _cleanup
 }
@@ -13,6 +14,41 @@ _install_base_packages() {
   packages=($(_config_list provisioning.packages))
   if [[ "${#packages[@]}" -gt 0 ]]; then
     pacman -S --noconfirm "${packages[@]}"
+  fi
+}
+
+_install_desktop() {
+  desktop="$(_config_value provisioning.desktop)"
+  extras="$(_config_value provisioning.desktop-extras)"
+
+  if [[ "${desktop}" == "gnome" ]]; then
+    _info "Installing Gnome"
+    pacman -S --noconfirm gnome gdm
+    if [[ "${extras}" == "true" ]]; then
+      pacman -S --noconfirm gnome-extras
+    fi
+    systemctl enable gdm
+  elif [[ "${desktop}" == "plasma" ]]; then
+    _info "Installing Plasma"
+    pacman -S --noconfirm plasma sddm
+    if [[ "${extras}" == "true" ]]; then
+      pacman -S --noconfirm kde-applications
+    fi
+    systemctl enable sddm
+  elif [[ "${desktop}" == "xfce" ]]; then
+    _info "Installing XFCE"
+    pacman -S --noconfirm xfce4 lightdm lightdm-gtk-greeter
+    if [[ "${extras}" == "true" ]]; then
+      pacman -S --noconfirm xfce4-goodies
+    fi
+    systemctl enable lightdm
+  elif [[ "${desktop}" == "mate" ]]; then
+    _info "Installing MATE"
+    pacman -S --noconfirm mate lightdm lightdm-gtk-greeter
+    if [[ "${extras}" == "true" ]]; then
+      pacman -S --noconfirm mate-extra
+    fi
+    systemctl enable lightdm
   fi
 }
 
