@@ -18,38 +18,80 @@ _install_base_packages() {
 }
 
 _install_desktop() {
+  # Get desktop environment configuration
   desktop="$(_config_value provisioning.desktop)"
-  extras="$(_config_value provisioning.desktop-extras)"
 
-  if [[ "${desktop}" == "gnome" ]]; then
-    _info "Installing Gnome"
-    pacman -S --noconfirm gnome gdm
-    if [[ "${extras}" == "true" ]]; then
-      pacman -S --noconfirm gnome-extras
+  if [[ "${desktop}" =~ ^gnome|plasma|xfce|mate$ ]]; then
+    extras="$(_config_value provisioning.desktop-extras)"
+
+    # Install and configure Xorg
+    _install_xorg  
+
+    # Install and configure the desktop environment
+    if [[ "${desktop}" == "gnome" ]]; then
+      _info "Installing Gnome"
+      # Install basic Gnome and GDM packages
+      pacman -S --noconfirm gnome gdm
+      # Install the extras if specified
+      if [[ "${extras}" == "true" ]]; then
+        pacman -S --noconfirm gnome-extras
+      fi
+      # Enable the display manager on boot
+      systemctl enable gdm
+    elif [[ "${desktop}" == "plasma" ]]; then
+      _info "Installing Plasma"
+      # Install basic Plasma and SDDM packages
+      pacman -S --noconfirm plasma sddm
+      # Install the extras if specified
+      if [[ "${extras}" == "true" ]]; then
+        pacman -S --noconfirm kde-applications
+      fi
+      # Enable the display manager on boot
+      systemctl enable sddm
+    elif [[ "${desktop}" == "xfce" ]]; then
+      _info "Installing XFCE"
+      # Install basic XFCE and LightDM packages
+      pacman -S --noconfirm xfce4 lightdm lightdm-gtk-greeter
+      # Install the extras if specified
+      if [[ "${extras}" == "true" ]]; then
+        pacman -S --noconfirm xfce4-goodies
+      fi
+      # Enable the display manager on boot
+      systemctl enable lightdm
+    elif [[ "${desktop}" == "mate" ]]; then
+      _info "Installing MATE"
+      # Install basic MATE and LightDM packages
+      pacman -S --noconfirm mate lightdm lightdm-gtk-greeter
+      # Install the extras if specified
+      if [[ "${extras}" == "true" ]]; then
+        pacman -S --noconfirm mate-extra
+      fi
+      # Enable the display manager on boot
+      systemctl enable lightdm
     fi
-    systemctl enable gdm
-  elif [[ "${desktop}" == "plasma" ]]; then
-    _info "Installing Plasma"
-    pacman -S --noconfirm plasma sddm
-    if [[ "${extras}" == "true" ]]; then
-      pacman -S --noconfirm kde-applications
-    fi
-    systemctl enable sddm
-  elif [[ "${desktop}" == "xfce" ]]; then
-    _info "Installing XFCE"
-    pacman -S --noconfirm xfce4 lightdm lightdm-gtk-greeter
-    if [[ "${extras}" == "true" ]]; then
-      pacman -S --noconfirm xfce4-goodies
-    fi
-    systemctl enable lightdm
-  elif [[ "${desktop}" == "mate" ]]; then
-    _info "Installing MATE"
-    pacman -S --noconfirm mate lightdm lightdm-gtk-greeter
-    if [[ "${extras}" == "true" ]]; then
-      pacman -S --noconfirm mate-extra
-    fi
-    systemctl enable lightdm
   fi
+}
+
+_install_xorg() {
+  # First detect the GPU type
+  gpuinfo="$(lspci -v | grep -A1 -e VGA -e 3D)"
+
+  if [[ grep -i -q "qxl" <<<"${gpuinfo}" ]]; then
+    _info "QXL/Virtualised GPU detected"
+    drivers=(xf86-video-qxl spice-vdagent)
+  elif [[ grep -i -q "intel" <<<"${gpuinfo}" ]]; then
+    _info "Intel GPU detected"
+    drivers=(xf86-video-intel)
+  elif [[ grep -i -q "amd" <<<"${gpuinfo}" ]]; then
+    _info "AMD GPU detected"
+    drivers=(xf86-video-amdgpu)
+  elif [[ grep -i -q "nvidia" <<<"${gpuinfo}" ]]; then
+    _info "nVidia GPU detected"
+    drivers=(nvidia)
+  fi
+  # Install Xorg and video drivers
+  _info "Installing Xorg and video drivers"
+  pacman -S --noconfirm xorg-server "${drivers[@]}"
 }
 
 _setup_yay() {
