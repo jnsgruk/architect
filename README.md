@@ -2,17 +2,21 @@
 
 > Yet-Another-Arch-Installer
 
-This project not finished, but currently a simple set of shell scripts/templated files to bootstrap an Arch Linux system. It is currently **very** minimal. By default, the script will:
+This project not finished, but currently a simple set of shell scripts/templated files to bootstrap an Arch Linux system. It is fairly minimal, and quite opinionated.
 
-- Partition a disk (basic partitioning with a single boot partition and a large ext4 root)
-- Install very few basic packages
+My primary use case for this is building my own machines, but also quickly building virtual machines with different configs for testing new desktop releases etc. I tend to use libvirt and virt-manager, so any VM detection is based on that assumption.
+
+By default, the script will:
+
+- Partition a disk (single ext4 root partition, optionally encrypted with LVM-on-LUKS)
+- Install a few basic packages
 - Install and configure `systemd-boot` (UEFI systems) or `grub` (BIOS systems)
 - Configure locale/timezone/keyboard layout
 - Detect requirement for, and if necessary install microcode packages
 - Create a non-root user and enable `sudo` access
 - Install and enable NetworkManager
 - Install [yay](https://github.com/Jguer/yay)
-- Install a Desktop Environment
+- Install a Desktop Environment (Gnome, Plasma, XFCE or Mate)
 
 ## Getting Started
 
@@ -124,7 +128,9 @@ Stage 3 aims to raise the install from "minimum viable arch" to a more usable sy
 
 ## TODO/Contributing
 
-Coming soon...
+I'm planning to keep this project relatively minimal, but will consider adding features if requested through Github Issues or otherwise. Feel free to submit pull requests!
+
+Currently planned features...
 
 - [ ] Add option to provide URL to post-provision script
 - [ ] Migrate to `systemd` hooks in `mkinitcpio`?
