@@ -91,7 +91,7 @@ _install_xorg_drivers() {
   fi
   # Install Xorg and video drivers
   _info "Installing Xorg and video drivers"
-  pacman -S --noconfirm "${drivers[@]}"
+  pacman -S --noconfirm xorg-server "${drivers[@]}"
 
   # Enable spice-vdagent if QXL
   if grep -i -q "qxl" <<<"${gpuinfo}"; then
