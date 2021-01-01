@@ -95,7 +95,7 @@ _install_xorg() {
 
   # Enable spice-vdagent if QXL
   if grep -i -q "qxl" <<<"${gpuinfo}"; then
-    info "Enabling spice agent"
+    _info "Enabling spice agent"
     systemctl enable spice-vdagentd
     systemctl enable qemu-guest-agent
   fi
