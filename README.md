@@ -129,6 +129,7 @@ Coming soon...
 - [ ] Add option to provide URL to post-provision script
 - [ ] Migrate to `systemd` hooks in `mkinitcpio`?
 - [ ] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
+- [ ] Configure a less ugly lightdm greeter and sddm theme
 - [ ] Configure bluetooth and audio properly if desktop specified
 - Configure TRIM properly if on a supported SSD
   - [ ] Detect SSD and TRIM support
