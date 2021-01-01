@@ -23,6 +23,9 @@ _install_desktop() {
 
   if [[ "${desktop}" =~ ^gnome|plasma|xfce|mate$ ]]; then
     extras="$(_config_value provisioning.desktop-extras)"  
+    
+    # Install and configure Xorg/graphics drivers
+    _install_xorg_drivers
 
     # Install and configure the desktop environment
     if [[ "${desktop}" == "gnome" ]]; then
@@ -66,9 +69,6 @@ _install_desktop() {
       # Enable the display manager on boot
       systemctl enable lightdm
     fi
-
-    # Install and configure Xorg/graphics drivers
-    _install_xorg_drivers
   fi
 }
 
