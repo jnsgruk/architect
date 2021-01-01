@@ -17,6 +17,10 @@ partitioning:
   swap: 1024
 
 provisioning:
+  # Desktop environment. Options: none, gnome, plasma, xfce, mate
+  desktop: gnome
+  # Install appropriate desktop extras like gnome-extra, kde-applications, xfce4-goodies
+  desktop-extras: true
   # List of packages to install
   packages:
     - git
