@@ -76,16 +76,16 @@ _install_xorg() {
   # First detect the GPU type
   gpuinfo="$(lspci -v | grep -A1 -e VGA -e 3D)"
 
-  if [[ grep -i -q "qxl" <<<"${gpuinfo}" ]]; then
+  if grep -i -q "qxl" <<<"${gpuinfo}"; then
     _info "QXL/Virtualised GPU detected"
     drivers=(xf86-video-qxl spice-vdagent qemu-guest-agent)
-  elif [[ grep -i -q "intel" <<<"${gpuinfo}" ]]; then
+  elif grep -i -q "intel" <<<"${gpuinfo}"; then
     _info "Intel GPU detected"
     drivers=(xf86-video-intel)
-  elif [[ grep -i -q "amd" <<<"${gpuinfo}" ]]; then
+  elif grep -i -q "amd" <<<"${gpuinfo}"; then
     _info "AMD GPU detected"
     drivers=(xf86-video-amdgpu)
-  elif [[ grep -i -q "nvidia" <<<"${gpuinfo}" ]]; then
+  elif grep -i -q "nvidia" <<<"${gpuinfo}"; then
     _info "nVidia GPU detected"
     drivers=(nvidia)
   fi
@@ -94,7 +94,7 @@ _install_xorg() {
   pacman -S --noconfirm xorg-server "${drivers[@]}"
 
   # Enable spice-vdagent if QXL
-  if [[ grep -i -q "qxl" <<<"${gpuinfo}" ]]; then
+  if grep -i -q "qxl" <<<"${gpuinfo}"; then
     info "Enabling spice agent"
     systemctl enable spice-vdagentd
     systemctl enable qemu-guest-agent
