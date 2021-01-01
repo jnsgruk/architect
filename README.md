@@ -11,7 +11,8 @@ This project not finished, but currently a simple set of shell scripts/templated
 - Detect requirement for, and if necessary install microcode packages
 - Create a non-root user and enable `sudo` access
 - Install and enable NetworkManager
-- Install [yay](https://gtihub.com/Jguer/yay)
+- Install [yay](https://github.com/Jguer/yay)
+- Install a Desktop Environment
 
 ## Getting Started
 
@@ -56,6 +57,10 @@ partitioning:
   swap: 1024
 
 provisioning:
+  # Desktop environment. Options: none, gnome, plasma, xfce, mate
+  desktop: gnome
+  # Install appropriate desktop extras like gnome-extra, kde-applications, xfce4-goodies
+  desktop-extras: true
   # List of packages to install
   packages:
     - git
@@ -115,7 +120,7 @@ Stage 3 aims to raise the install from "minimum viable arch" to a more usable sy
 
 - Install more packages
 - Install and configure the `yay` AUR helper
-- More soon!
+- Install and configure a desktop environment (Gnome, Plasma, XFCE or Mate)
 
 ## TODO/Contributing
 
@@ -123,22 +128,24 @@ Coming soon...
 
 - [ ] Add option to provide URL to post-provision script
 - [ ] Migrate to `systemd` hooks in `mkinitcpio`?
+- [ ] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
+- [ ] Configure bluetooth and audio properly if desktop specified
 - Configure TRIM properly if on a supported SSD
   - [ ] Detect SSD and TRIM support
   - [ ] TRIM for ext4
   - [ ] TRIM for btrfs
   - [ ] TRIM for swapfile
 - [ ] Install and configure Plymouth with flicker-free boot
-- Presets for desktop environments:
-  - [ ] Configure/detect display drivers
-  - [ ] Gnome
-  - [ ] Plasma
-  - [ ] XFCE
-  - [ ] MATE
 - Update disk partitioning to include:
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
   - [x] LVM/LUKS with ext4
+- Presets for desktop environments:
+  - [x] Configure/detect display drivers
+  - [x] Gnome
+  - [x] Plasma
+  - [x] XFCE
+  - [x] MATE
 - [x] Configure a swapfile
 - [x] Non-EFI bootloader install with GRUB
 - [x] Enable option settings with a JSON/YAML file
