@@ -28,7 +28,7 @@ _install_desktop() {
     if [[ "${desktop}" == "gnome" ]]; then
       _info "Installing Gnome"
       # Install basic Gnome and GDM packages
-      pacman -S --noconfirm gnome gdm
+      pacman -S --noconfirm gnome gdm gnome-terminal
       # Install the extras if specified
       if [[ "${extras}" == "true" ]]; then
         pacman -S --noconfirm gnome-extras
@@ -38,7 +38,7 @@ _install_desktop() {
     elif [[ "${desktop}" == "plasma" ]]; then
       _info "Installing Plasma"
       # Install basic Plasma and SDDM packages
-      pacman -S --noconfirm plasma sddm
+      pacman -S --noconfirm plasma sddm konsole
       # Install the extras if specified
       if [[ "${extras}" == "true" ]]; then
         pacman -S --noconfirm kde-applications
