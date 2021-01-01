@@ -78,7 +78,7 @@ _install_xorg_drivers() {
 
   if grep -i -q "qxl" <<<"${gpuinfo}"; then
     _info "QXL/Virtualised GPU detected"
-    drivers=(xf86-video-qxl spice-vdagent qemu-guest-agent)
+    drivers=(spice-vdagent qemu-guest-agent)
   elif grep -i -q "intel" <<<"${gpuinfo}"; then
     _info "Intel GPU detected"
     drivers=(xf86-video-intel)
