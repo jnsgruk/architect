@@ -22,10 +22,7 @@ _install_desktop() {
   desktop="$(_config_value provisioning.desktop)"
 
   if [[ "${desktop}" =~ ^gnome|plasma|xfce|mate$ ]]; then
-    extras="$(_config_value provisioning.desktop-extras)"
-
-    # Install and configure Xorg
-    _install_xorg  
+    extras="$(_config_value provisioning.desktop-extras)"  
 
     # Install and configure the desktop environment
     if [[ "${desktop}" == "gnome" ]]; then
@@ -69,10 +66,13 @@ _install_desktop() {
       # Enable the display manager on boot
       systemctl enable lightdm
     fi
+
+    # Install and configure Xorg/graphics drivers
+    _install_xorg_drivers
   fi
 }
 
-_install_xorg() {
+_install_xorg_drivers() {
   # First detect the GPU type
   gpuinfo="$(lspci -v | grep -A1 -e VGA -e 3D)"
 
@@ -91,7 +91,7 @@ _install_xorg() {
   fi
   # Install Xorg and video drivers
   _info "Installing Xorg and video drivers"
-  pacman -S --noconfirm xorg-server "${drivers[@]}"
+  pacman -S --noconfirm "${drivers[@]}"
 
   # Enable spice-vdagent if QXL
   if grep -i -q "qxl" <<<"${gpuinfo}"; then
