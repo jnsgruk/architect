@@ -72,11 +72,19 @@ _setup_mkinitcpio() {
       # Copy across the modified mkinitcpio.conf
       cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
     fi
-    # Regenerate the initramfs
-    mkinitcpio -p linux
-    # Ensure permissions are set on the initramfs to protect keyfile if present
-    chmod 600 /boot/initramfs-linux*
+  else
+    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
+      # Copy across the modified mkinitcpio.conf
+      cp /architect/templates/mkinitcpio_ext4.conf /etc/mkinitcpio.conf
+    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+      # Copy across the modified mkinitcpio.conf
+      cp /architect/templates/mkinitcpio_btrfs.conf /etc/mkinitcpio.conf
+    fi
   fi
+  # Regenerate the initramfs
+  mkinitcpio -p linux
+  # Ensure permissions are set on the initramfs to protect keyfile if present
+  chmod 600 /boot/initramfs-linux*
 }
 
 _setup_swap() {
