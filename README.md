@@ -135,7 +135,6 @@ Currently planned features...
 - [ ] Add option to provide URL to post-provision script
 - [ ] Migrate to `systemd` hooks in `mkinitcpio`?
 - [ ] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
-- [ ] Configure a less ugly lightdm greeter and sddm theme
 - [ ] Configure bluetooth and audio properly if desktop specified
 - Configure TRIM properly if on a supported SSD
   - [ ] Detect SSD and TRIM support
@@ -153,6 +152,7 @@ Currently planned features...
   - [x] Plasma
   - [x] XFCE
   - [x] MATE
+- [x] Configure a less ugly lightdm greeter and sddm theme
 - [x] Configure a swapfile
 - [x] Non-EFI bootloader install with GRUB
 - [x] Enable option settings with a JSON/YAML file
