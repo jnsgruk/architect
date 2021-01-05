@@ -64,7 +64,7 @@ _install_desktop() {
     elif [[ "${desktop}" == "mate" ]]; then
       _info "Installing MATE"
       # Install basic MATE and LightDM packages
-      pacman -S --noconfirm mate lightdm lightdm-webkit-greeter
+      pacman -S --noconfirm mate lightdm lightdm-webkit2-greeter
       # Configure lightdm
       sed -i "s/#greeter-session=example-gtk-gnome/greeter-session=lightdm-webkit2-greeter/g" /etc/lightdm/lightdm.conf
       sed -i "s/#user-session=default/user-session=mate/g" /etc/lightdm/lightdm.conf
