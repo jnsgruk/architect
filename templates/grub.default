@@ -4,7 +4,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Arch"
 GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"
-GRUB_CMDLINE_LINUX="cryptdevice=/dev/disk/by-partlabel/root:cryptlvm cryptkey=rootfs:/root/cryptlvm.keyfile"
+GRUB_CMDLINE_LINUX="rd.luks.name=:UUID:=cryptlvm rd.luks.key=/root/cryptlvm.keyfile"
 
 # Preload both GPT and MBR modules so that they are not missed
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"

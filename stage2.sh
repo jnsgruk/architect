@@ -150,7 +150,7 @@ _install_bootloader() {
         # Add a line to the bootloader config
         echo "options cryptdevice=/dev/disk/by-partlabel/root:cryptlvm root=/dev/vg/root rw" >> /boot/loader/entries/arch.conf
       elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-        _error "Not implmented"
+        _error "Not implemented"
       fi
     else
       # Add the standard boot line to the bootloader if not encrypted
@@ -164,6 +164,8 @@ _install_bootloader() {
     # If encrypted, then copy our modified grub defaults
     if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
       cp /architect/templates/grub.default /etc/default/grub
+      root_partuuid="$(blkid -t PARTLABEL=root -s PARTLABEL -o value)"
+      sed "s/:UUID:/${root_partuuid}/g" /architect/templates/grub.default > /etc/default/grub
     fi
 
     grub-install --target=i386-pc --recheck "$(_config_value partitioning.disk)"
