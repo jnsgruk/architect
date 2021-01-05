@@ -51,7 +51,7 @@ _install_desktop() {
     elif [[ "${desktop}" == "xfce" ]]; then
       _info "Installing XFCE"
       # Install basic XFCE and LightDM packages
-      pacman -S --noconfirm xfce4 lightdm lightdm-gtk-greeter
+      pacman -S --noconfirm xfce4 lightdm lightdm-webkit2-greeter
       # Install the extras if specified
       if [[ "${extras}" == "true" ]]; then
         pacman -S --noconfirm xfce4-goodies
@@ -61,7 +61,7 @@ _install_desktop() {
     elif [[ "${desktop}" == "mate" ]]; then
       _info "Installing MATE"
       # Install basic MATE and LightDM packages
-      pacman -S --noconfirm mate lightdm lightdm-gtk-greeter
+      pacman -S --noconfirm mate lightdm lightdm-webkit2-greeter
       # Install the extras if specified
       if [[ "${extras}" == "true" ]]; then
         pacman -S --noconfirm mate-extra
