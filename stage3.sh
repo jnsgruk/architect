@@ -42,6 +42,7 @@ _install_desktop() {
       _info "Installing Plasma"
       # Install basic Plasma and SDDM packages
       pacman -S --noconfirm plasma-meta sddm konsole
+      echo 
       # Install the extras if specified
       if [[ "${extras}" == "true" ]]; then
         pacman -S --noconfirm kde-applications
