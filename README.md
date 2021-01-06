@@ -133,15 +133,14 @@ I'm planning to keep this project relatively minimal, but will consider adding f
 Currently planned features...
 
 - [ ] Add option to provide URL to post-provision script
-- [ ] Migrate to `systemd` hooks in `mkinitcpio`?
 - [ ] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
 - [ ] Configure bluetooth and audio properly if desktop specified
+- [ ] Install and configure Plymouth with flicker-free boot
 - Configure TRIM properly if on a supported SSD
   - [ ] Detect SSD and TRIM support
   - [ ] TRIM for ext4
   - [ ] TRIM for btrfs
   - [ ] TRIM for swapfile
-- [ ] Install and configure Plymouth with flicker-free boot
 - Update disk partitioning to include:
   - [ ] btrfs
   - [ ] LVM/LUKS with btrfs
@@ -152,6 +151,7 @@ Currently planned features...
   - [x] Plasma
   - [x] XFCE
   - [x] MATE
+- [x] Migrate to `systemd` hooks in `mkinitcpio`?
 - [x] Configure a less ugly lightdm greeter and sddm theme
 - [x] Configure a swapfile
 - [x] Non-EFI bootloader install with GRUB
