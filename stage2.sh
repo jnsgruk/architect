@@ -147,8 +147,9 @@ _install_bootloader() {
     # Check if the setup uses an encrypted disk
     if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
       if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-        # Add a line to the bootloader config
+        # Get the UUID of the root partition
         root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
+        # Add the options line to the systemd-boot config
         echo "options rd.luks.name=$root_uuid=cryptlvm root=/dev/vg/root" >> /boot/loader/entries/arch.conf
       elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
         _error "Not implemented"
@@ -164,8 +165,9 @@ _install_bootloader() {
 
     # If encrypted, then copy our modified grub defaults
     if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-      cp /architect/templates/grub.default /etc/default/grub
+      # Get the UUID of the root partition
       root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
+      # Template the UUID into the GRUB bootloader config template
       sed "s/:UUID:/${root_uuid}/g" /architect/templates/grub.default > /etc/default/grub
     fi
 
