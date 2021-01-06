@@ -14,6 +14,7 @@ _bootstrap() {
   # Configure architect
   _info "Configuring architect installer"
   _configure
+  _set_debug
   # Install git
   _info "Installing git into live environment"
   pacman -Syy --noconfirm git
@@ -26,6 +27,13 @@ _bootstrap() {
   export CONFIG="/architect/config.yml"
   # Start stage 1 installer
   /bin/bash /architect/stage1.sh
+}
+
+_set_debug() {
+  # Enable debug mode if
+  if command -v yq >/dev/null && [[ "$(_config_value architect.debug)" == "true" ]]; then
+    set -x
+  fi
 }
 
 _install_yq() {
@@ -146,9 +154,8 @@ if [[ -z "${CONFIG:-}" ]]; then
   fi
 fi
 
-if [[ "$(_config_value architect.debug)" == "true" ]]; then
-  set -x
-fi
+# Enable debug mode if specifed in config
+_set_debug
 
 # Check if architect is already in the environment
 # If not, we need to bootstrap
