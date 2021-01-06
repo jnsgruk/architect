@@ -35,3 +35,5 @@ architect:
   branch: master
   # Option to disable the provisioning stage
   disable_stage3: false
+  # Enable "set -x" in scripts for debugging
+  debug: false

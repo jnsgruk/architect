@@ -72,11 +72,19 @@ _setup_mkinitcpio() {
       # Copy across the modified mkinitcpio.conf
       cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
     fi
-    # Regenerate the initramfs
-    mkinitcpio -p linux
-    # Ensure permissions are set on the initramfs to protect keyfile if present
-    chmod 600 /boot/initramfs-linux*
+  else
+    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
+      # Copy across the modified mkinitcpio.conf
+      cp /architect/templates/mkinitcpio_ext4.conf /etc/mkinitcpio.conf
+    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+      # Copy across the modified mkinitcpio.conf
+      cp /architect/templates/mkinitcpio_btrfs.conf /etc/mkinitcpio.conf
+    fi
   fi
+  # Regenerate the initramfs
+  mkinitcpio -p linux
+  # Ensure permissions are set on the initramfs to protect keyfile if present
+  chmod 600 /boot/initramfs-linux*
 }
 
 _setup_swap() {
@@ -139,10 +147,12 @@ _install_bootloader() {
     # Check if the setup uses an encrypted disk
     if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
       if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-        # Add a line to the bootloader config
-        echo "options cryptdevice=/dev/disk/by-partlabel/root:cryptlvm root=/dev/vg/root rw" >> /boot/loader/entries/arch.conf
+        # Get the UUID of the root partition
+        root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
+        # Add the options line to the systemd-boot config
+        echo "options rd.luks.name=$root_uuid=cryptlvm root=/dev/vg/root" >> /boot/loader/entries/arch.conf
       elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-        _error "Not implmented"
+        _error "Not implemented"
       fi
     else
       # Add the standard boot line to the bootloader if not encrypted
@@ -155,7 +165,10 @@ _install_bootloader() {
 
     # If encrypted, then copy our modified grub defaults
     if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-      cp /architect/templates/grub.default /etc/default/grub
+      # Get the UUID of the root partition
+      root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
+      # Template the UUID into the GRUB bootloader config template
+      sed "s/:UUID:/${root_uuid}/g" /architect/templates/grub.default > /etc/default/grub
     fi
 
     grub-install --target=i386-pc --recheck "$(_config_value partitioning.disk)"

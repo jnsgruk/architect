@@ -1,5 +1,5 @@
 #!/bin/bash 
-set -euxo pipefail
+set -euo pipefail
 # Output green message prefixed with [+]
 _info() { echo -e "\e[92m[+] ${1:-}\e[0m"; }
 # Output orange message prefixed with [-]
@@ -114,7 +114,7 @@ _find_default_config() {
   fi
 }
 
-# Check if there is an argument to the script
+# Check if config is already defined; skip this step if it is
 if [[ -z "${CONFIG:-}" ]]; then
   # Remove any old (downloaded) config files
   rm -f /tmp/architect.yml
@@ -144,6 +144,10 @@ if [[ -z "${CONFIG:-}" ]]; then
     export CONFIG="$(_find_default_config)"
     _warn "No config specified, using defaults at ${CONFIG}"
   fi
+fi
+
+if [[ "$(_config_value architect.debug)" == "true" ]]; then
+  set -x
 fi
 
 # Check if architect is already in the environment
