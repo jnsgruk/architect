@@ -34,7 +34,7 @@ _install_desktop() {
       pacman -S --noconfirm gnome gdm gnome-terminal
       # Install the extras if specified
       if [[ "${extras}" == "true" ]]; then
-        pacman -S --noconfirm gnome-extras
+        pacman -S --noconfirm gnome-extra
       fi
       # Enable the display manager on boot
       systemctl enable gdm
