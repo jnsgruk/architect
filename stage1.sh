@@ -105,7 +105,7 @@ _partition_bios_ext4() {
   mount "${root_part}" /mnt
 }
 
-_partition_bios_ext4() {
+_partition_bios_btrfs() {
   # Create the BIOS boot partition
   parted "$(_config_value partitioning.disk)" -s mkpart bios 0% 2
   # Set the bios_grub flag on the boot partition
