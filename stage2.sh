@@ -97,7 +97,6 @@ _setup_swap() {
     if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
       dd if=/dev/zero of=/.swap/swapfile bs=1M count="$(_config_value partitioning.swap)" status=progress
     elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-      _error "Not implemented"
       # Setup swapfile for btrfs
       truncate -s 0 /.swap/swapfile
       # Set NoCoW attribute
