@@ -92,24 +92,28 @@ _setup_swap() {
   if [[ "$(_config_value partitioning.swap)" -gt 0 ]]; then
     _info "Configuring swapfile"
     # Create the /swap directory if it doesn't already exist
-    mkdir -p /swap
+    mkdir -p /.swap
     # Swapfile creation for btrfs is slightly different - so check
     if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-      dd if=/dev/zero of=/swap/swapfile bs=1M count="$(_config_value partitioning.swap)" status=progress
+      dd if=/dev/zero of=/.swap/swapfile bs=1M count="$(_config_value partitioning.swap)" status=progress
     elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
       _error "Not implemented"
-      # Below taken from Arch Wiki - not yet tested
-      truncate -s 0 /swap/swapfile
-      chattr +C /swap/swapfile
-      btrfs property set /swap/swapfile compression none
+      # Setup swapfile for btrfs
+      truncate -s 0 /.swap/swapfile
+      # Set NoCoW attribute
+      chattr +C /.swap/swapfile
+      # Ensure compression is disabled
+      btrfs property set /.swap/swapfile compression none
+      # Allocate the swapfile
+      fallocate --length "$(_config_value partitioning.swap)MiB" /.swap/swapfile
     fi
 
     # Set swapfile permissions
-    chmod 600 /swap/swapfile
+    chmod 600 /.swap/swapfile
     # Make the swapfile
-    mkswap /swap/swapfile
+    mkswap /.swap/swapfile
     # Write an entry into the fstab to activate swap on boot
-    echo "/swap/swapfile  none  swap  defaults  0 0" >> /etc/fstab
+    echo "/.swap/swapfile  none  swap  defaults  0 0" >> /etc/fstab
   fi
 }
 

@@ -105,18 +105,65 @@ _partition_bios_ext4() {
   mount "${root_part}" /mnt
 }
 
+_partition_bios_ext4() {
+  # Create the BIOS boot partition
+  parted "$(_config_value partitioning.disk)" -s mkpart bios 0% 2
+  # Set the bios_grub flag on the boot partition
+  parted "$(_config_value partitioning.disk)" set 1 bios_grub on
+  # Create a single ext4 root partition
+  parted "$(_config_value partitioning.disk)" -s mkpart root 2 100%
+  # Set the boot flag on the root partition
+  parted "$(_config_value partitioning.disk)" set 2 boot on
+
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+    # Setup the LUKS/LVM containers
+    _setup_luks_lvm
+    root_part="/dev/vg/root"
+  else
+    root_part="$(_config_value partitioning.disk)2"
+  fi
+
+  # Format the root partition
+  mkfs.btrfs --force "${root_part}"
+  # Mount the root partition to /mnt
+  mount "${root_part}" /mnt
+  # Create btrfs subvolumes
+  btrfs subvolume create /mnt/root
+  btrfs subvolume create /mnt/home
+  btrfs subvolume create /mnt/snapshots
+  btrfs subvolume create /mnt/swap
+  btrfs subvolume create /mnt/var
+  # Remount with btrfs options
+  umount -R /mnt
+  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,discard=async"
+  mount -t btrfs -o subvol=root,"${btrfs_opts}" "${root_part}" /mnt
+  mount -t btrfs -o subvol=home,"${btrfs_opts}" "${root_part}" /mnt/home
+  mount -t btrfs -o subvol=var,"${btrfs_opts}" "${root_part}" /mnt/var
+  mount -t btrfs -o subvol=swap,defaults "${root_part}" /mnt/.swap
+  mount -t btrfs -o subvol=snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
+}
+
 _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
   # Create a new partition table
   parted "$(_config_value partitioning.disk)" -s mklabel gpt
-  
-  # Check if we're on a BIOS/UEFI system
-  if _check_efi; then
-    _partition_uefi_ext4
-  else
-    _partition_bios_ext4
-  fi
 
+  if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
+    # Check if we're on a BIOS/UEFI system
+    if _check_efi; then
+      _partition_uefi_ext4
+    else
+      _partition_bios_ext4
+    fi
+  elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+    # Check if we're on a BIOS/UEFI system
+    if _check_efi; then
+      _partition_uefi_btrfs
+    else
+      _partition_bios_btrfs
+    fi
+  fi
+  
   # Create the etc directory
   mkdir /mnt/etc
   # Generate the fstab file
@@ -124,7 +171,7 @@ _partition_and_mount() {
 }
 
 _pacstrap() {
-  pacstrap_packages=(base linux linux-firmware sudo networkmanager)
+  pacstrap_packages=(base linux linux-firmware sudo networkmanager btrfs-progs)
   # Pacstrap the system with the base packages above
   _info "Bootstrapping baseline Arch Linux system"
   pacstrap /mnt "${pacstrap_packages[@]}"
