@@ -53,7 +53,7 @@ _setup_luks_lvm() {
   lvcreate -l 100%FREE vg -n root
 }
 
-_partition_uefi_ext4() {
+_partition_uefi_btrfs() {
   # Create a 500MiB FAT32 Boot Partition
   parted "$(_config_value partitioning.disk)" -s mkpart boot fat32 0% 500MiB
   # Set the boot/esp flags on the boot partition
