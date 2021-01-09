@@ -133,9 +133,11 @@ _partition_bios_btrfs() {
   btrfs subvolume create /mnt/snapshots
   btrfs subvolume create /mnt/.swap
   btrfs subvolume create /mnt/var
+  # Create mount points
+  mkdir /mnt/home /mnt/var /mnt/.swap /.snapshots
   # Remount with btrfs options
   umount -R /mnt
-  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,discard=async"
+  btrfs_opts="defaults,compress=lzo,ssd,noatime,discard=async"
   mount -t btrfs -o subvol=root,"${btrfs_opts}" "${root_part}" /mnt
   mount -t btrfs -o subvol=home,"${btrfs_opts}" "${root_part}" /mnt/home
   mount -t btrfs -o subvol=var,"${btrfs_opts}" "${root_part}" /mnt/var
