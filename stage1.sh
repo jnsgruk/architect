@@ -131,7 +131,7 @@ _partition_bios_btrfs() {
   btrfs subvolume create /mnt/root
   btrfs subvolume create /mnt/home
   btrfs subvolume create /mnt/snapshots
-  btrfs subvolume create /mnt/swap
+  btrfs subvolume create /mnt/.swap
   btrfs subvolume create /mnt/var
   # Remount with btrfs options
   umount -R /mnt
