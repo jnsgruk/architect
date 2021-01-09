@@ -72,6 +72,48 @@ _partition_uefi_ext4() {
   fi
   
   # Format the root partition
+  mkfs.btrfs --force "${root_part}"
+  # Mount the root partition to /mnt
+  mount "${root_part}" /mnt
+  # Create btrfs subvolumes
+  btrfs subvolume create /mnt/root
+  btrfs subvolume create /mnt/home
+  btrfs subvolume create /mnt/snapshots
+  btrfs subvolume create /mnt/.swap
+  btrfs subvolume create /mnt/var
+  # Remount with btrfs options
+  umount -R /mnt
+  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,discard=async"
+  mount -t btrfs -o subvol=root,"${btrfs_opts}" "${root_part}" /mnt
+  mount -t btrfs -o subvol=home,"${btrfs_opts}" "${root_part}" /mnt/home
+  mount -t btrfs -o subvol=var,"${btrfs_opts}" "${root_part}" /mnt/var
+  mount -t btrfs -o subvol=.swap,defaults,x-mount.mkdir "${root_part}" /mnt/.swap
+  mount -t btrfs -o subvol=snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
+  # Create the mount point for boot
+  mkdir -p /mnt/boot
+  # Mount the boot partition
+  mount "$(_config_value partitioning.disk)1" /mnt/boot
+}
+
+_partition_uefi_ext4() {
+  # Create a 500MiB FAT32 Boot Partition
+  parted "$(_config_value partitioning.disk)" -s mkpart boot fat32 0% 500MiB
+  # Set the boot/esp flags on the boot partition
+  parted "$(_config_value partitioning.disk)" set 1 boot on
+  # Create a single ext4 root partition
+  parted "$(_config_value partitioning.disk)" -s mkpart root ext4 500MiB 100%
+  # Format the boot partition
+  mkfs.fat -F32 "$(_config_value partitioning.disk)1"
+  
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+    # Setup the LUKS/LVM containers
+    _setup_luks_lvm
+    root_part="/dev/vg/root"
+  else
+    root_part="$(_config_value partitioning.disk)2"
+  fi
+  
+  # Format the root partition
   mkfs.ext4 "${root_part}"
   # Mount the root partition to /mnt
   mount "${root_part}" /mnt
