@@ -158,8 +158,13 @@ _install_bootloader() {
         _error "Not implemented"
       fi
     else
-      # Add the standard boot line to the bootloader if not encrypted
-      echo "options root=/dev/disk/by-partlabel/root rw" >> /boot/loader/entries/arch.conf
+      if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
+        # Add the standard boot line to the bootloader if not encrypted
+        echo "options root=/dev/disk/by-partlabel/root rw" >> /boot/loader/entries/arch.conf
+      elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+        # Add the standard boot line to the bootloader if not encrypted
+        echo "options root=/dev/disk/by-partlabel/root rootflags=subvol=root rw" >> /boot/loader/entries/arch.conf
+      fi
     fi
   else
     _info "BIOS mode detected; installing and configuring GRUB"
