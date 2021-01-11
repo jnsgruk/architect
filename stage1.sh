@@ -170,19 +170,19 @@ _partition_bios_btrfs() {
   # Mount the root partition to /mnt
   mount "${root_part}" /mnt
   # Create btrfs subvolumes
-  btrfs subvolume create /mnt/root
-  btrfs subvolume create /mnt/home
-  btrfs subvolume create /mnt/snapshots
-  btrfs subvolume create /mnt/.swap
-  btrfs subvolume create /mnt/var
+  btrfs subvolume create /mnt/@
+  btrfs subvolume create /mnt/@home
+  btrfs subvolume create /mnt/@snapshots
+  btrfs subvolume create /mnt/@swap
+  btrfs subvolume create /mnt/@var
   # Remount with btrfs options
   umount -R /mnt
-  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,discard=async"
-  mount -t btrfs -o subvol=root,"${btrfs_opts}" "${root_part}" /mnt
-  mount -t btrfs -o subvol=home,"${btrfs_opts}" "${root_part}" /mnt/home
-  mount -t btrfs -o subvol=var,"${btrfs_opts}" "${root_part}" /mnt/var
-  mount -t btrfs -o subvol=.swap,defaults,x-mount.mkdir "${root_part}" /mnt/.swap
-  mount -t btrfs -o subvol=snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
+  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,nodiratime"
+  mount -t btrfs -o subvol=@,"${btrfs_opts}" "${root_part}" /mnt
+  mount -t btrfs -o subvol=@home,"${btrfs_opts}" "${root_part}" /mnt/home
+  mount -t btrfs -o subvol=@var,"${btrfs_opts}" "${root_part}" /mnt/var
+  mount -t btrfs -o subvol=@snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
+  mount -t btrfs -o subvol=@swap,defaults,x-mount.mkdir "${root_part}" /mnt/.swap
 }
 
 _partition_and_mount() {
