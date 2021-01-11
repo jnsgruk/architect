@@ -8,7 +8,7 @@ My primary use case for this is building my own machines, but also quickly build
 
 By default, the script will:
 
-- Partition a disk (single ext4 root partition, optionally encrypted with LVM-on-LUKS)
+- Partition a disk (ext4 or btrfs, optionally encrypted with LVM-on-LUKS)
 - Install a few basic packages
 - Install and configure `systemd-boot` (UEFI systems) or `grub` (BIOS systems)
 - Configure locale/timezone/keyboard layout
@@ -53,7 +53,7 @@ regional:
 
 partitioning:
   disk: /dev/vda
-  # Currently, only ext4 is supported
+  # Choose either ext4 or btrfs
   filesystem: ext4
   # If set to true, disk is encrypted with LVM-on-LUKS
   encrypted: false
@@ -79,6 +79,10 @@ architect:
   branch: master
   # Option to disable the provisioning stage
   disable_stage3: false
+  # Enable "set -x" in scripts for debugging
+  debug: false
+  # Unmount drives and reboot after install
+  reboot: true
 ```
 
 It is possible to specify a smaller config file to just override specific values in the defaults, for example:
@@ -137,13 +141,11 @@ Currently planned features...
 - [ ] Configure bluetooth and audio properly if desktop specified
 - [ ] Install and configure Plymouth with flicker-free boot
 - Configure TRIM properly if on a supported SSD
-  - [ ] Detect SSD and TRIM support
-  - [ ] TRIM for ext4
-  - [ ] TRIM for btrfs
-  - [ ] TRIM for swapfile
+  - [x] Detect SSD and TRIM support
+  - [x] Enable the `fstrim` weekly timer
 - Update disk partitioning to include:
-  - [ ] btrfs
-  - [ ] LVM/LUKS with btrfs
+  - [x] btrfs
+  - [x] LVM/LUKS with btrfs
   - [x] LVM/LUKS with ext4
 - Presets for desktop environments:
   - [x] Configure/detect display drivers

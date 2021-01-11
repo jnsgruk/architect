@@ -6,13 +6,11 @@ _main() {
   
   _set_locale
   _set_hostname
-  _misc_config
 
   _setup_mkinitcpio
   _setup_swap
   
-  _install_microcode
-  _install_bootloader
+  _configure_bootloader
   _setup_boot
   _setup_users
 
@@ -39,48 +37,58 @@ _set_locale() {
 
 _set_hostname() {
   _info "Configuring hostname"
-  echo "$(_config_value hostname)" > /etc/hostname
+  local hostname="$(_config_value hostname)"
+  echo "${hostname}" > /etc/hostname
   # Update the template hosts file with selected hostname
-  sed -e "s/:HOSTNAME:/$(_config_value hostname)/g" /architect/templates/hosts > /etc/hosts
+  sed -e "s/:HOSTNAME:/${hostname}/g" /architect/templates/hosts > /etc/hosts
 }
 
-_misc_config() {
-  # Configure pacman to use color in output
-  sed -i "s/#Color/Color/g" /etc/pacman.conf
+_create_encryption_keyfile() {
+  # Generate a new keyfile for the luks partition
+  dd bs=512 count=4 if=/dev/random of=/root/cryptlvm.keyfile iflag=fullblock
+  # Set permissions on keyfile
+  chmod 000 /root/cryptlvm.keyfile
+  # Add the keyfile to luks
+  _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
+  cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
 }
 
 _setup_mkinitcpio() {
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-    # Install the necessary utilities
-    pacman -S --noconfirm lvm2
-    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-      if _check_efi; then
-        # Copy across the modified mkinitcpio.conf
-        cp /architect/templates/mkinitcpio_encrypted_ext4.conf /etc/mkinitcpio.conf
-      else
-        # Copy across the modified mkinitcpio.conf
-        cp /architect/templates/mkinitcpio_encrypted_ext4_grub.conf /etc/mkinitcpio.conf
-        # Generate a new keyfile for the luks partition
-        dd bs=512 count=4 if=/dev/random of=/root/cryptlvm.keyfile iflag=fullblock
-        # Set permissions on keyfile
-        chmod 000 /root/cryptlvm.keyfile
-        # Add the keyfile to luks
-        _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
-        cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
-      fi
-    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-      # Copy across the modified mkinitcpio.conf
-      cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
-    fi
-  else
-    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-      # Copy across the modified mkinitcpio.conf
-      cp /architect/templates/mkinitcpio_ext4.conf /etc/mkinitcpio.conf
-    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-      # Copy across the modified mkinitcpio.conf
-      cp /architect/templates/mkinitcpio_btrfs.conf /etc/mkinitcpio.conf
-    fi
+  # Setup some variables
+  local initramfs_files=""
+  local hooks=()
+  local encrypted="$(_config_value partitioning.encrypted)"
+  
+  # If we're setting up disk encryption on a BIOS system
+  if [[ "${encrypted}" == "true" ]] && ! _check_efi; then
+    # Set variable pointing to the keyfile
+    initramfs_files="/root/cryptlvm.keyfile"
+    # Create a keyfile to embed in the initramfs
+    _create_encryption_keyfile
   fi
+
+  # Add basic hooks required by all installs
+  hooks+=(base systemd autodetect)
+  # If encryption is enabled, add the relevant systemd/keyboard hooks
+  if [[ "${encrypted}" == "true" ]]; then
+    hooks+=(keyboard sd-vconsole modconf block sd-encrypt sd-lvm2 filesystems)
+  else
+    # Standard hooks without encryption
+    hooks+=(modconf block filesystems)
+  fi
+  # Check if we're installing on btrfs
+  if [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+    hooks+=(btrfs)
+  fi
+  # Add the fsck hook last
+  hooks+=(fsck)
+
+  # Template out a new mkinitcpio config
+  hook_string="${hooks[@]}"
+  sed -e "s|:FILES:|${initramfs_files}|g" \
+    -e "s|:HOOKS:|${hook_string// /\ }|g" \
+    /architect/templates/mkinitcpio.conf > /etc/mkinitcpio.conf
+
   # Regenerate the initramfs
   mkinitcpio -p linux
   # Ensure permissions are set on the initramfs to protect keyfile if present
@@ -88,83 +96,81 @@ _setup_mkinitcpio() {
 }
 
 _setup_swap() {
+  local swap="$(_config_value partitioning.swap)"
+  local filesystem="$(_config_value partitioning.filesystem)"
   # Check that configured swap size is > 0
-  if [[ "$(_config_value partitioning.swap)" -gt 0 ]]; then
+  if [[ "${swap}" -gt 0 ]]; then
     _info "Configuring swapfile"
     # Create the /swap directory if it doesn't already exist
-    mkdir -p /swap
+    mkdir -p /.swap
     # Swapfile creation for btrfs is slightly different - so check
-    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-      dd if=/dev/zero of=/swap/swapfile bs=1M count="$(_config_value partitioning.swap)" status=progress
-    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-      _error "Not implemented"
-      # Below taken from Arch Wiki - not yet tested
-      truncate -s 0 /swap/swapfile
-      chattr +C /swap/swapfile
-      btrfs property set /swap/swapfile compression none
+    if [[ "${filesystem}" == "ext4" ]]; then
+      # Create a simple blank swapfile with dd
+      dd if=/dev/zero of=/.swap/swapfile bs=1M count="${swap}" status=progress
+    elif [[ "${filesystem}" == "btrfs" ]]; then
+      # Setup swapfile for btrfs
+      truncate -s 0 /.swap/swapfile
+      # Set NoCoW attribute
+      chattr +C /.swap/swapfile
+      # Ensure compression is disabled
+      btrfs property set /.swap/swapfile compression none
+      # Allocate the swapfile
+      fallocate --length "${swap}MiB" /.swap/swapfile
     fi
 
     # Set swapfile permissions
-    chmod 600 /swap/swapfile
+    chmod 600 /.swap/swapfile
     # Make the swapfile
-    mkswap /swap/swapfile
+    mkswap /.swap/swapfile
     # Write an entry into the fstab to activate swap on boot
-    echo "/swap/swapfile  none  swap  defaults  0 0" >> /etc/fstab
+    echo "/.swap/swapfile  none  swap  defaults  0 0" >> /etc/fstab
   fi
 }
 
-_install_microcode() {
-  if systemd-detect-virt; then
-    _info "Virtualisation detected, skipping ucode installation"
-  elif grep -q "GenuineIntel" /proc/cpuinfo; then
-    _info "Intel CPU detected, installing intel-ucode"
-    pacman -S --noconfirm intel-ucode
-  elif grep -q "AuthenticAMD" /proc/cpuinfo; then
-    _info "AMD CPU detected, installing amd-ucode"
-    pacman -S --noconfirm amd-ucode
-  fi
-}
-
-_install_bootloader() {
+_configure_bootloader() {
+  local encrypted="$(_config_value partitioning.encrypted)"
   if _check_efi; then
     _info "EFI mode detected; installing and configuring systemd-boot"
     # Install systemd-boot with default options
     bootctl install
-    # Start building the bootloader config
-    echo "title   Arch Linux" > /boot/loader/entries/arch.conf
-    echo "linux   /vmlinuz-linux" >> /boot/loader/entries/arch.conf
+
+    # Initialise some variables to build on
+    local ucode=""
+    local root_part=""
+    local root_opts=""
+    local cmdline_extra=""
     
     # Add the microcode to the bootloader config if required
     if pacman -Qqe | grep -q intel-ucode; then 
-      echo "initrd  /intel-code.img" >> /boot/loader/entries/arch.conf
+      ucode="initrd  /intel-code.img"
     elif pacman -Qqe | grep -q amd-ucode; then 
-      echo "initrd  /amd-code.img" >> /boot/loader/entries/arch.conf
+      ucode="initrd  /amd-code.img"
     fi
-    
-    # Add the initramfs to the bootloader config
-    echo "initrd  /initramfs-linux.img" >> /boot/loader/entries/arch.conf
-    
+        
     # Check if the setup uses an encrypted disk
-    if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-      if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-        # Get the UUID of the root partition
-        root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
-        # Add the options line to the systemd-boot config
-        echo "options rd.luks.name=$root_uuid=cryptlvm root=/dev/vg/root" >> /boot/loader/entries/arch.conf
-      elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-        _error "Not implemented"
-      fi
+    if [[ "${encrypted}" == "true" ]]; then
+      # Set the root partition
+      root_part="rd.luks.name=$(blkid -t PARTLABEL=root -s UUID -o value)=cryptlvm root=/dev/vg/root"
     else
-      # Add the standard boot line to the bootloader if not encrypted
-      echo "options root=/dev/disk/by-partlabel/root rw" >> /boot/loader/entries/arch.conf
+      root_part="root=/dev/disk/by-partlabel/root"
+    fi  
+
+    # Add subvolume config for btrfs
+    if [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+      root_opts="rootflags=subvol=@"
     fi
+
+    # Template out the bootloader config
+    sed -e "s|:UCODE:|${ucode}|g" \
+      -e "s|:ROOTPART:|${root_part}|g" \
+      -e "s|:ROOTOPTS:|${root_opts}|g" \
+      -e "s|:CMDLINE_EXTRA:|${cmdline_extra}|g" \
+      /architect/templates/arch.conf > /boot/loader/entries/arch.conf
   else
-    _info "BIOS mode detected; installing and configuring GRUB"
-    # Install grub
-    pacman -S --noconfirm grub
+    _info "BIOS mode detected; configuring GRUB"
 
     # If encrypted, then copy our modified grub defaults
-    if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+    if [[ "${encrypted}" == "true" ]]; then
       # Get the UUID of the root partition
       root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
       # Template the UUID into the GRUB bootloader config template
@@ -181,19 +187,27 @@ _setup_users() {
   _warn "Changing root password; enter below:"
   # Change the root password
   passwd
-  _info "Creating a non-root user: $(_config_value username)"
+  local username="$(_config_value username)"
+  _info "Creating a non-root user: ${username}"
   # Create a new default user
-  useradd -m -s /bin/bash -G wheel "$(_config_value username)"
-  _warn "Enter password for $(_config_value username)"
-  passwd "$(_config_value username)"
+  useradd -m -s /bin/bash -G wheel "${username}"
+  _warn "Enter password for ${username}"
+  passwd "${username}"
   # Uncomment a line from the /etc/sudoers file
   _info "Configuring sudo access for the wheel group"
   sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers
 }
 
 _setup_boot() {
+  # Enable NetworkManager start on boot
   _info "Enabling NetworkManager"
   systemctl enable NetworkManager
+  # Get the full /dev/xxx name of the disk
+  disk="$(_config_value partitioning.disk)"
+  # Enable fstrim timer if the boot disk is an SSD (strip the /dev/ from the disk name)
+  if [[ "$(cat /sys/block/${disk:5}/queue/rotational)" == "0" ]]; then
+    systemctl enable fstrim.timer
+  fi
 }
 
 _main
