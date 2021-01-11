@@ -33,8 +33,6 @@ _set_locale() {
   # Set the default language and keymaps
   echo "LANG=$(_config_value regional.locale)" > /etc/locale.conf
   echo "KEYMAP=$(_config_value regional.keymap)" > /etc/vconsole.conf
-  # Configure Pacman in new install
-  sed -i "s/#Color/Color/g" /etc/pacman.conf
 }
 
 _set_hostname() {
