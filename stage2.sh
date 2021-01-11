@@ -255,6 +255,6 @@ _setup_boot() {
   fi
 }
 
-if [[ "${1}" == "install" ]]; then
+if [[ "${1:-}" == "install" ]]; then
   _main
 fi
