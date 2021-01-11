@@ -139,7 +139,7 @@ Currently planned features...
 - [ ] Add option to provide URL to post-provision script
 - [ ] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
 - [ ] Configure bluetooth and audio properly if desktop specified
-- [ ] Install and configure Plymouth with flicker-free boot
+- [x] Install and configure Plymouth with flicker-free boot
 - Configure TRIM properly if on a supported SSD
   - [x] Detect SSD and TRIM support
   - [x] Enable the `fstrim` weekly timer
