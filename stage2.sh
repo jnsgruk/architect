@@ -83,7 +83,7 @@ _setup_mkinitcpio() {
   hooks+=(fsck)
 
   # Template out a new mkinitcpio config
-  sed -e "s/:FILES:/${initramfs_files}/g" \
+  sed -e "s/:FILES:/\\${initramfs_files}/g" \
     -e "s/:HOOKS:/${hooks[@]}/g" \
     /architect/templates/mkinitcpio.conf > mkinitcpio.conf
 
