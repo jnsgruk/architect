@@ -137,12 +137,10 @@ Currently planned features...
 - [ ] Configure bluetooth and audio properly if desktop specified
 - [ ] Install and configure Plymouth with flicker-free boot
 - Configure TRIM properly if on a supported SSD
-  - [ ] Detect SSD and TRIM support
-  - [ ] TRIM for ext4
-  - [ ] TRIM for btrfs
-  - [ ] TRIM for swapfile
+  - [x] Detect SSD and TRIM support
+  - [x] Enable the `fstrim` weekly timer
 - Update disk partitioning to include:
-  - [ ] btrfs
+  - [x] btrfs
   - [ ] LVM/LUKS with btrfs
   - [x] LVM/LUKS with ext4
 - Presets for desktop environments:

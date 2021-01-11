@@ -163,7 +163,7 @@ _install_bootloader() {
         echo "options root=/dev/disk/by-partlabel/root rw" >> /boot/loader/entries/arch.conf
       elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
         # Add the standard boot line to the bootloader if not encrypted
-        echo "options root=/dev/disk/by-partlabel/root rootflags=subvol=root rw" >> /boot/loader/entries/arch.conf
+        echo "options root=/dev/disk/by-partlabel/root rootflags=subvol=@ rw" >> /boot/loader/entries/arch.conf
       fi
     fi
   else
@@ -200,8 +200,15 @@ _setup_users() {
 }
 
 _setup_boot() {
+  # Enable NetworkManager start on boot
   _info "Enabling NetworkManager"
   systemctl enable NetworkManager
+  # Get the full /dev/xxx name of the disk
+  disk="$(_config_value partitioning.disk)"
+  # Enable fstrim timer if the boot disk is an SSD (strip the /dev/ from the disk name)
+  if [[ "$(cat /sys/block/${disk:5}/queue/rotational)" == "0" ]]; then
+    systemctl enable fstrim.timer
+  fi
 }
 
 _main
