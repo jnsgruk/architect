@@ -9,7 +9,7 @@ regional:
 
 partitioning:
   disk: /dev/vda
-  # Currently, only ext4 is supported
+  # Choose either ext4 or btrfs
   filesystem: ext4
   # If set to true, disk is encrypted with LVM-on-LUKS
   encrypted: false

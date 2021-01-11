@@ -53,159 +53,82 @@ _setup_luks_lvm() {
   lvcreate -l 100%FREE vg -n root
 }
 
-_partition_uefi_btrfs() {
-  # Create a 500MiB FAT32 Boot Partition
-  parted "$(_config_value partitioning.disk)" -s mkpart boot fat32 0% 500MiB
-  # Set the boot/esp flags on the boot partition
-  parted "$(_config_value partitioning.disk)" set 1 boot on
-  # Create a single ext4 root partition
-  parted "$(_config_value partitioning.disk)" -s mkpart root ext4 500MiB 100%
-  # Format the boot partition
-  mkfs.fat -F32 "$(_config_value partitioning.disk)1"
-  
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-    # Setup the LUKS/LVM containers
-    _setup_luks_lvm
-    root_part="/dev/vg/root"
-  else
-    root_part="$(_config_value partitioning.disk)2"
-  fi
-  
-  # Format the root partition
-  mkfs.btrfs --force "${root_part}"
-  # Mount the root partition to /mnt
-  mount "${root_part}" /mnt
-  # Create btrfs subvolumes
-  btrfs subvolume create /mnt/@
-  btrfs subvolume create /mnt/@home
-  btrfs subvolume create /mnt/@snapshots
-  btrfs subvolume create /mnt/@swap
-  btrfs subvolume create /mnt/@var
-  # Remount with btrfs options
-  umount -R /mnt
-  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,nodiratime"
-  mount -t btrfs -o subvol=@,"${btrfs_opts}" "${root_part}" /mnt
-  mount -t btrfs -o subvol=@home,"${btrfs_opts}" "${root_part}" /mnt/home
-  mount -t btrfs -o subvol=@var,"${btrfs_opts}" "${root_part}" /mnt/var
-  mount -t btrfs -o subvol=@snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
-  mount -t btrfs -o subvol=@swap,defaults,x-mount.mkdir "${root_part}" /mnt/.swap
-  # Create the mount point for boot
-  mkdir -p /mnt/boot
-  # Mount the boot partition
-  mount "$(_config_value partitioning.disk)1" /mnt/boot
-}
+_create_and_mount_filesystems() {
+  # Give the first argument to this function a friendly name
+  local root_part="${1}"
 
-_partition_uefi_ext4() {
-  # Create a 500MiB FAT32 Boot Partition
-  parted "$(_config_value partitioning.disk)" -s mkpart boot fat32 0% 500MiB
-  # Set the boot/esp flags on the boot partition
-  parted "$(_config_value partitioning.disk)" set 1 boot on
-  # Create a single ext4 root partition
-  parted "$(_config_value partitioning.disk)" -s mkpart root ext4 500MiB 100%
-  # Format the boot partition
-  mkfs.fat -F32 "$(_config_value partitioning.disk)1"
-  
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-    # Setup the LUKS/LVM containers
-    _setup_luks_lvm
-    root_part="/dev/vg/root"
-  else
-    root_part="$(_config_value partitioning.disk)2"
-  fi
-  
-  # Format the root partition
-  mkfs.ext4 "${root_part}"
-  # Mount the root partition to /mnt
-  mount "${root_part}" /mnt
-  # Create the mount point for boot
-  mkdir -p /mnt/boot
-  # Mount the boot partition
-  mount "$(_config_value partitioning.disk)1" /mnt/boot
-}
-
-_partition_bios_ext4() {
-  # Create the BIOS boot partition
-  parted "$(_config_value partitioning.disk)" -s mkpart bios 0% 2
-  # Set the bios_grub flag on the boot partition
-  parted "$(_config_value partitioning.disk)" set 1 bios_grub on
-  # Create a single ext4 root partition
-  parted "$(_config_value partitioning.disk)" -s mkpart root 2 100%
-  # Set the boot flag on the root partition
-  parted "$(_config_value partitioning.disk)" set 2 boot on
-
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-    # Setup the LUKS/LVM containers
-    _setup_luks_lvm
-    root_part="/dev/vg/root"
-  else
-    root_part="$(_config_value partitioning.disk)2"
+  if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
+      # Format the root partition
+    mkfs.ext4 "${root_part}"
+    # Mount the root partition to /mnt
+    mount "${root_part}" /mnt
+  elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+    # Format the root partition
+    mkfs.btrfs --force "${root_part}"
+    # Mount the root partition to /mnt
+    mount "${root_part}" /mnt
+    # Create btrfs subvolumes
+    btrfs subvolume create /mnt/@
+    btrfs subvolume create /mnt/@home
+    btrfs subvolume create /mnt/@snapshots
+    btrfs subvolume create /mnt/@swap
+    btrfs subvolume create /mnt/@var
+    # Remount with btrfs options
+    umount -R /mnt
+    btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,nodiratime"
+    mount -t btrfs -o subvol=@,"${btrfs_opts}" "${root_part}" /mnt
+    mount -t btrfs -o subvol=@home,"${btrfs_opts}" "${root_part}" /mnt/home
+    mount -t btrfs -o subvol=@var,"${btrfs_opts}" "${root_part}" /mnt/var
+    mount -t btrfs -o subvol=@snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
+    mount -t btrfs -o subvol=@swap,defaults,x-mount.mkdir "${root_part}" /mnt/.swap
   fi
 
-  # Format the root partition
-  mkfs.ext4 "${root_part}"
-  # Mount the root partition to /mnt
-  mount "${root_part}" /mnt
-}
-
-_partition_bios_btrfs() {
-  # Create the BIOS boot partition
-  parted "$(_config_value partitioning.disk)" -s mkpart bios 0% 2
-  # Set the bios_grub flag on the boot partition
-  parted "$(_config_value partitioning.disk)" set 1 bios_grub on
-  # Create a single ext4 root partition
-  parted "$(_config_value partitioning.disk)" -s mkpart root 2 100%
-  # Set the boot flag on the root partition
-  parted "$(_config_value partitioning.disk)" set 2 boot on
-
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
-    # Setup the LUKS/LVM containers
-    _setup_luks_lvm
-    root_part="/dev/vg/root"
-  else
-    root_part="$(_config_value partitioning.disk)2"
+  # Check if we're on a UEFI system
+  if _check_efi; then
+    # Format the boot partition
+    mkfs.fat -F32 "$(_config_value partitioning.disk)1"
+    # Mount the boot partition
+    mount -o "defaults,x-mount.mkdir" "$(_config_value partitioning.disk)1" /mnt/boot
   fi
-
-  # Format the root partition
-  mkfs.btrfs --force "${root_part}"
-  # Mount the root partition to /mnt
-  mount "${root_part}" /mnt
-  # Create btrfs subvolumes
-  btrfs subvolume create /mnt/@
-  btrfs subvolume create /mnt/@home
-  btrfs subvolume create /mnt/@snapshots
-  btrfs subvolume create /mnt/@swap
-  btrfs subvolume create /mnt/@var
-  # Remount with btrfs options
-  umount -R /mnt
-  btrfs_opts="defaults,x-mount.mkdir,compress=lzo,ssd,noatime,nodiratime"
-  mount -t btrfs -o subvol=@,"${btrfs_opts}" "${root_part}" /mnt
-  mount -t btrfs -o subvol=@home,"${btrfs_opts}" "${root_part}" /mnt/home
-  mount -t btrfs -o subvol=@var,"${btrfs_opts}" "${root_part}" /mnt/var
-  mount -t btrfs -o subvol=@snapshots,"${btrfs_opts}" "${root_part}" /mnt/.snapshots
-  mount -t btrfs -o subvol=@swap,defaults,x-mount.mkdir "${root_part}" /mnt/.swap
 }
+
 
 _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
   # Create a new partition table
   parted "$(_config_value partitioning.disk)" -s mklabel gpt
-
-  if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-    # Check if we're on a BIOS/UEFI system
-    if _check_efi; then
-      _partition_uefi_ext4
-    else
-      _partition_bios_ext4
-    fi
-  elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-    # Check if we're on a BIOS/UEFI system
-    if _check_efi; then
-      _partition_uefi_btrfs
-    else
-      _partition_bios_btrfs
-    fi
+  
+  # Check if we're on a UEFI system
+  if _check_efi; then
+    # Create a 500MiB FAT32 Boot Partition
+    parted "$(_config_value partitioning.disk)" -s mkpart boot fat32 0% 500MiB
+    # Set the boot/esp flags on the boot partition
+    parted "$(_config_value partitioning.disk)" set 1 boot on
+    # Create a single root partition
+    parted "$(_config_value partitioning.disk)" -s mkpart root 500MiB 100%
+  else
+    # Create the BIOS boot partition
+    parted "$(_config_value partitioning.disk)" -s mkpart bios 0% 2
+    # Set the bios_grub flag on the boot partition
+    parted "$(_config_value partitioning.disk)" set 1 bios_grub on
+    # Create a single root partition
+    parted "$(_config_value partitioning.disk)" -s mkpart root 2 100%
+    # Set the boot flag on the root partition
+    parted "$(_config_value partitioning.disk)" set 2 boot on
   fi
   
+  # Check if the config enforces disk encryption
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+    # Setup the LUKS/LVM containers
+    _setup_luks_lvm
+    root_part="/dev/vg/root"
+  else
+    root_part="$(_config_value partitioning.disk)2"
+  fi
+
+  # Create the relevant filesystems and mount them for install using the newly
+  # created root partition
+  _create_and_mount_filesystems "${root_part}"
   # Create the etc directory
   mkdir /mnt/etc
   # Generate the fstab file
