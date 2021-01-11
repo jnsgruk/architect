@@ -83,8 +83,9 @@ _setup_mkinitcpio() {
   hooks+=(fsck)
 
   # Template out a new mkinitcpio config
+  hook_string="${hooks[@]}"
   sed -e "s|:FILES:|${initramfs_files}|g" \
-    -e "s|:HOOKS:|${hooks[@]}|g" \
+    -e "s|:HOOKS:|${hook_string// /\ }|g" \
     /architect/templates/mkinitcpio.conf > mkinitcpio.conf
 
   # Regenerate the initramfs
