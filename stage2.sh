@@ -55,13 +55,12 @@ _create_encryption_keyfile() {
   cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
 }
 
+# shellcheck disable=SC2120
 _setup_mkinitcpio() {
   # Setup some variables
-  local initramfs_files
-  local hooks
-  local encrypted
-  initramfs_files=""
-  hooks=()
+  local initramfs_files=""
+  local hooks=()
+  local encrypted=""
   encrypted="$(_config_value partitioning.encrypted)"
   
   # If we're setting up disk encryption on a BIOS system
@@ -73,7 +72,19 @@ _setup_mkinitcpio() {
   fi
 
   # Add basic hooks required by all installs
-  hooks+=(base systemd autodetect)
+  hooks+=(base systemd)
+  
+  # If this function is passed an argument "reconfigure"
+  if [[ -n "${1}" ]] && [[ "$1" == "reconfigure" ]]; then
+    # This is only called in this mode from Stage 3 onwards to reconfigure for additional functionality
+    # Check if Plymouth was enabled in the config
+    if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
+      # Add the sd-plymouth hook
+      hooks+=(sd-plymouth)
+    fi
+  fi
+  
+  hooks+=(autodetect)
   # If encryption is enabled, add the relevant systemd/keyboard hooks
   if [[ "${encrypted}" == "true" ]]; then
     hooks+=(keyboard sd-vconsole modconf block sd-encrypt sd-lvm2 filesystems)
@@ -102,8 +113,8 @@ _setup_mkinitcpio() {
 
 _setup_swap() {
   # Setup some variables
-  local swap
-  local filesystem
+  local swap=""
+  local filesystem=""
   swap="$(_config_value partitioning.swap)"
   filesystem="$(_config_value partitioning.filesystem)"
   # Check that configured swap size is > 0
@@ -135,45 +146,54 @@ _setup_swap() {
   fi
 }
 
+# shellcheck disable=SC2120
 _configure_bootloader() {
-  # Setup some variables
-  local encrypted
+   # Initialise some variables to build on
+  local encrypted=""
+  local ucode=""
+  local root_part=""
+  local root_opts=""
+  local cmdline_extra=""
+  # Initialise variables
   encrypted="$(_config_value partitioning.encrypted)"
+
+  # If this function is passed an argument "reconfigure"
+  if [[ -n "${1}" ]] && [[ "$1" == "reconfigure" ]]; then
+    # This is only called in this mode from Stage 3 onwards to reconfigure for additional functionality
+    # Check if Plymouth was enabled in the config
+    if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
+      # Add kernel command line params for plymouth
+      cmdline_extra="quiet splash loglevel=3 rd.udev.log_priority=3 vt.global_cursor_default=0"
+    fi
+  fi
+
+  # Check if the setup uses an encrypted disk
+  if [[ "${encrypted}" == "true" ]]; then
+    # Set the root partition
+    root_part="rd.luks.name=$(blkid -t PARTLABEL=root -s UUID -o value)=cryptlvm root=/dev/vg/root"
+  else
+    root_part="root=/dev/disk/by-partlabel/root"
+  fi 
+
+  # Add subvolume config for btrfs
+  if [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+    root_opts="rootflags=subvol=@"
+  fi
   
   if _check_efi; then
-    _info "EFI mode detected; installing and configuring systemd-boot"
-    # Install systemd-boot with default options
-    bootctl install
-
-    # Initialise some variables to build on
-    local ucode
-    local root_part
-    local root_opts
-    local cmdline_extra
-    # Initialise variables
-    ucode=""
-    root_part=""
-    root_opts=""
-    cmdline_extra=""
+    _info "EFI mode detected; configuring systemd-boot"
     
+    # Install systemd-boot if it isn't already
+    if [[ ! -f "/boot/EFI/systemd/systemd-bootx64.efi" ]]; then
+      # Install systemd-boot with default options
+      bootctl install
+    fi
+
     # Add the microcode to the bootloader config if required
     if pacman -Qqe | grep -q intel-ucode; then 
       ucode="initrd  /intel-code.img"
     elif pacman -Qqe | grep -q amd-ucode; then 
       ucode="initrd  /amd-code.img"
-    fi
-        
-    # Check if the setup uses an encrypted disk
-    if [[ "${encrypted}" == "true" ]]; then
-      # Set the root partition
-      root_part="rd.luks.name=$(blkid -t PARTLABEL=root -s UUID -o value)=cryptlvm root=/dev/vg/root"
-    else
-      root_part="root=/dev/disk/by-partlabel/root"
-    fi  
-
-    # Add subvolume config for btrfs
-    if [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-      root_opts="rootflags=subvol=@"
     fi
 
     # Template out the bootloader config
@@ -185,13 +205,21 @@ _configure_bootloader() {
   else
     _info "BIOS mode detected; configuring GRUB"
 
-    # If encrypted, then copy our modified grub defaults
+    # Check if the setup uses an encrypted disk
     if [[ "${encrypted}" == "true" ]]; then
-      # Get the UUID of the root partition
-      root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
-      # Template the UUID into the GRUB bootloader config template
-      sed "s/:UUID:/${root_uuid}/g" /architect/templates/grub.default > /etc/default/grub
+      # Set the root partition
+      local uuid
+      uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
+      # Add the keyfile config to the partition config for the bootloader
+      root_part="${root_part} rd.luks.key=${uuid}=/root/cryptlvm.keyfile rd.luks.options=keyfile-timeout=5s"
     fi
+
+    # Template the UUID into the GRUB bootloader config template
+    sed -e "s|:UCODE:|${ucode}|g" \
+      -e "s|:ROOTPART:|${root_part}|g" \
+      -e "s|:ROOTOPTS:|${root_opts}|g" \
+      -e "s|:CMDLINE_EXTRA:|${cmdline_extra}|g" \
+      /architect/templates/grub.default > /etc/default/grub
 
     grub-install --target=i386-pc --recheck "$(_config_value partitioning.disk)"
     # Generate GRUB config; microcode updates should be detected automatically
@@ -201,7 +229,7 @@ _configure_bootloader() {
 
 _setup_users() {
   # Setup and init local variable
-  local username
+  local username=""
   username="$(_config_value username)"
   
   _warn "Changing root password; enter below:"
@@ -229,4 +257,6 @@ _setup_boot() {
   fi
 }
 
-_main
+if [[ "${1}" == "install" ]]; then
+  _main
+fi

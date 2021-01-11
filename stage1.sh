@@ -18,7 +18,7 @@ _main() {
 
   _info "Chrooting and running stage 2"
   chmod +x /architect/stage2.sh
-  arch-chroot /mnt /architect/stage2.sh
+  arch-chroot /mnt /architect/stage2.sh install
 
   _cleanup
 
@@ -39,7 +39,7 @@ _preamble() {
 
 _setup_luks_lvm() {
   _warn "Setting up disk encryption. Confirmation and password entry required"
-  local disk
+  local disk=""
   disk="$(_config_value partitioning.disk)"
   
   # luksFormat the root partition
@@ -66,9 +66,9 @@ _setup_luks_lvm() {
 
 _create_and_mount_filesystems() {
   # Declare and initialise some local vars
-  local root_part
-  local filesystem
-  local disk
+  local root_part=""
+  local filesystem=""
+  local disk=""
   root_part="${1}"
   filesystem="$(_config_value partitioning.filesystem)"
   disk="$(_config_value partitioning.disk)"
@@ -113,7 +113,7 @@ _create_and_mount_filesystems() {
 
 _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
-  local disk
+  local disk=""
   disk="$(_config_value partitioning.disk)"
   # Create a new partition table
   parted "${disk}" -s mklabel gpt

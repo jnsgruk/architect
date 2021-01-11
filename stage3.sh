@@ -8,6 +8,7 @@ _main() {
   _install_base_packages
   _install_desktop
   _setup_yay
+  _setup_plymouth
   _cleanup
 }
 
@@ -124,6 +125,49 @@ _setup_yay() {
   cd /tmp/yay || exit 1
   sudo -u architect makepkg -si --noconfirm
   cd / || exit 1
+}
+
+# Wrapper function to install a package from the AUR with no prompts
+_install_aur() {
+  sudo -u architect yay --save --nodiffmenu --noeditmenu --nocleanmenu "$@"
+}
+
+_setup_plymouth() {
+  # Only run this code if plymouth was enabled
+  if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
+    # Declare some local variables to use
+    local desktop=""
+    local aur_packages=(plymouth)
+    desktop="$(_config_value provisioning.desktop)"
+    
+    # GDM/Plymouth work better together with the gdm-plymouth package
+    if [[ "${desktop}" == "gnome" ]]; then
+      aur_packages+=(gdm-plymouth)
+    fi
+
+    # Install needed packages
+    _install_aur "${aur_packages[@]}"
+
+    # Import the helper functions from stage2
+    # shellcheck source=stage2.sh
+    source /architect/stage2.sh
+
+    # Regenerate the initramfs with plymouth
+    _setup_mkinitcpio reconfigure
+    # Reconfigure the bootloader to add kernel command line params
+    _configure_bootloader reconfigure
+    # Set the bgrt theme
+    plymouth-set-default-theme -R bgrt
+
+    # Adjust the display manager to ensure flicker-free boot (ish)
+    if [[ "${desktop}" == "plasma" ]]; then
+      systemctl disable sddm
+      systemctl enable sddm-plymouth
+    elif [[ "${desktop}" == "mate" ]] || [[ "${desktop}" == "xfce" ]]; then
+      systemctl disable lightdm
+      systemctl enable lightdm-plymouth
+    fi
+  fi
 }
 
 _cleanup() {
