@@ -58,7 +58,7 @@ _setup_mkinitcpio() {
   local hooks=()
   
   # If we're setting up disk encryption on a BIOS system
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]] && ! _check_uefi; then
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]] && ! _check_efi; then
     # Set variable pointing to the keyfile
     initramfs_files="/root/cryptlvm.keyfile"
     # Create a keyfile to embed in the initramfs
@@ -85,7 +85,7 @@ _setup_mkinitcpio() {
   hook_string="${hooks[@]}"
   sed -e "s|:FILES:|${initramfs_files}|g" \
     -e "s|:HOOKS:|${hook_string// /\ }|g" \
-    /architect/templates/mkinitcpio.conf > mkinitcpio.conf
+    /architect/templates/mkinitcpio.conf > /etc/mkinitcpio.conf
 
   # Regenerate the initramfs
   mkinitcpio -p linux
