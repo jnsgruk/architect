@@ -19,10 +19,8 @@ _main() {
   arch-chroot /mnt /architect/stage2.sh
 
   _cleanup
-  # Get out of the chroot
-  exit 0
 
-  if [[ "$(_config_value architect.reboot)" == "true" ]]; then
+  if [[ "${ARCHITECT_REBOOT}" == "true" ]]; then
     _info "Rebooting"
     umount -R /mnt
     reboot 0
@@ -156,7 +154,7 @@ _pacstrap() {
   # Configure pacman to use color in output
   sed -i "s/#Color/Color/g" /etc/pacman.conf
   # Add basic required packages to pacstrap
-  pacstrap_packages+=(base linux linux-firmware sudo networkmanager)
+  pacstrap_packages+=(base linux linux-firmware sudo networkmanager vim curl htop wget)
   
   # Work out the CPU model and add ucode to pacstrap if required
   if systemd-detect-virt; then
@@ -178,7 +176,12 @@ _pacstrap() {
 
 _cleanup() {
   _info "Cleaning up"
-  rm -rf /architect
+  # Read the  reboot config var before removing yq
+  if [[ "$(_config_value architect.reboot)" == "true" ]]; then
+    export ARCHITECT_REBOOT="true"
+  fi
+  # Cleanup files
+  rm -rf /mnt/architect
   rm /usr/bin/yq
 }
 
