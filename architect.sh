@@ -140,7 +140,6 @@ if [[ -z "${CONFIG:-}" ]]; then
     # Check if the specified argument is a valid URL to a user config
     elif curl -fsLo /tmp/architect.yml "${1}"; then
       CONFIG="/tmp/architect.yml"
-      expo
       _info "Using config specified at: ${1}"
     
     # Unrecognised argument, try to get the default config
