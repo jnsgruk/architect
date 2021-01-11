@@ -5,6 +5,7 @@ pacstrap_packages=()
 
 _main() {
   # Source some helper functions and config
+  # shellcheck source=architect.sh
   source /architect/architect.sh
 
   _preamble
@@ -38,7 +39,8 @@ _preamble() {
 
 _setup_luks_lvm() {
   _warn "Setting up disk encryption. Confirmation and password entry required"
-  local disk="$(_config_value partitioning.disk)"
+  local disk
+  disk="$(_config_value partitioning.disk)"
   
   # luksFormat the root partition
   if _check_efi; then
@@ -63,10 +65,13 @@ _setup_luks_lvm() {
 }
 
 _create_and_mount_filesystems() {
-  # Give the first argument to this function a friendly name
-  local root_part="${1}"
-  local filesystem="$(_config_value partitioning.filesystem)"
-  local disk="$(_config_value partitioning.disk)"
+  # Declare and initialise some local vars
+  local root_part
+  local filesystem
+  local disk
+  root_part="${1}"
+  filesystem="$(_config_value partitioning.filesystem)"
+  disk="$(_config_value partitioning.disk)"
 
   if [[ "${filesystem}" == "ext4" ]]; then
       # Format the root partition
@@ -108,7 +113,8 @@ _create_and_mount_filesystems() {
 
 _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
-  local disk="$(_config_value partitioning.disk)"
+  local disk
+  disk="$(_config_value partitioning.disk)"
   # Create a new partition table
   parted "${disk}" -s mklabel gpt
   
@@ -183,7 +189,8 @@ _cleanup() {
   _info "Cleaning up"
   # Read the  reboot config var before removing yq
   if [[ "$(_config_value architect.reboot)" == "true" ]]; then
-    export ARCHITECT_REBOOT="true"
+    ARCHITECT_REBOOT="true"
+    export ARCHITECT_REBOOT
   fi
   # Cleanup files
   rm -rf /mnt/architect

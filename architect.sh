@@ -59,7 +59,7 @@ _configure() {
 
   for v in "${required_fields[@]}"; do
     value=$(_config_value "$v")
-    [[ -z "${value}" ]] && _error "Undefined config value: ${1}"
+    [[ -z "${value}" ]] && _error "Undefined config value: ${v}"
   done
   _info "Validated config"
 }
@@ -129,29 +129,31 @@ if [[ -z "${CONFIG:-}" ]]; then
   if [[ -n "${1:-}" ]]; then
     # If the first argument is a file, then set CONFIG to the filename
     if [[ -f "${1}" ]]; then
-      export CONFIG="${1}"
+      CONFIG="${1}"
       _info "Using config specified at: ${1}"
     
     # Check if there is an Architect preset matching the first arg
     elif curl -fsLo "/tmp/architect.yml" "https://raw.githubusercontent.com/jnsgruk/architect/master/presets/${1}.yml"; then
-      export CONFIG="/tmp/architect.yml"
+      CONFIG="/tmp/architect.yml"
       _info "Using architect preset config: ${1}"
     
     # Check if the specified argument is a valid URL to a user config
     elif curl -fsLo /tmp/architect.yml "${1}"; then
-      export CONFIG="/tmp/architect.yml"
+      CONFIG="/tmp/architect.yml"
+      expo
       _info "Using config specified at: ${1}"
     
     # Unrecognised argument, try to get the default config
     else
-      export CONFIG="$(_find_default_config)"
+      CONFIG="$(_find_default_config)"
       _warn "No valid config specified, using defaults at ${CONFIG}"
     fi
   else
     # No arguments specified, use the default config
-    export CONFIG="$(_find_default_config)"
+    CONFIG="$(_find_default_config)"
     _warn "No config specified, using defaults at ${CONFIG}"
   fi
+  export CONFIG
 fi
 
 # Enable debug mode if specifed in config

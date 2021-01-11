@@ -2,7 +2,9 @@
 
 _main() {
   # Source common fuctions to be used throughout
+  # shellcheck source=architect.sh
   source /architect/architect.sh
+  
   _install_base_packages
   _install_desktop
   _setup_yay
@@ -11,7 +13,7 @@ _main() {
 
 _install_base_packages() {
   # Convert the yaml packages list into a bash array
-  packages=($(_config_list provisioning.packages))
+  mapfile -t packages < <(_config_list provisioning.packages)
   if [[ "${#packages[@]}" -gt 0 ]]; then
     pacman -S --noconfirm "${packages[@]}"
   fi

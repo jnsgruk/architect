@@ -2,6 +2,7 @@
 
 _main() {
   # Source common fuctions to be used throughout
+  # shellcheck source=architect.sh
   source /architect/architect.sh
   
   _set_locale
@@ -37,7 +38,8 @@ _set_locale() {
 
 _set_hostname() {
   _info "Configuring hostname"
-  local hostname="$(_config_value hostname)"
+  local hostname
+  hostname="$(_config_value hostname)"
   echo "${hostname}" > /etc/hostname
   # Update the template hosts file with selected hostname
   sed -e "s/:HOSTNAME:/${hostname}/g" /architect/templates/hosts > /etc/hosts
@@ -55,9 +57,12 @@ _create_encryption_keyfile() {
 
 _setup_mkinitcpio() {
   # Setup some variables
-  local initramfs_files=""
-  local hooks=()
-  local encrypted="$(_config_value partitioning.encrypted)"
+  local initramfs_files
+  local hooks
+  local encrypted
+  initramfs_files=""
+  hooks=()
+  encrypted="$(_config_value partitioning.encrypted)"
   
   # If we're setting up disk encryption on a BIOS system
   if [[ "${encrypted}" == "true" ]] && ! _check_efi; then
@@ -84,7 +89,7 @@ _setup_mkinitcpio() {
   hooks+=(fsck)
 
   # Template out a new mkinitcpio config
-  hook_string="${hooks[@]}"
+  hook_string="${hooks[*]}"
   sed -e "s|:FILES:|${initramfs_files}|g" \
     -e "s|:HOOKS:|${hook_string// /\ }|g" \
     /architect/templates/mkinitcpio.conf > /etc/mkinitcpio.conf
@@ -96,8 +101,11 @@ _setup_mkinitcpio() {
 }
 
 _setup_swap() {
-  local swap="$(_config_value partitioning.swap)"
-  local filesystem="$(_config_value partitioning.filesystem)"
+  # Setup some variables
+  local swap
+  local filesystem
+  swap="$(_config_value partitioning.swap)"
+  filesystem="$(_config_value partitioning.filesystem)"
   # Check that configured swap size is > 0
   if [[ "${swap}" -gt 0 ]]; then
     _info "Configuring swapfile"
@@ -128,17 +136,25 @@ _setup_swap() {
 }
 
 _configure_bootloader() {
-  local encrypted="$(_config_value partitioning.encrypted)"
+  # Setup some variables
+  local encrypted
+  encrypted="$(_config_value partitioning.encrypted)"
+  
   if _check_efi; then
     _info "EFI mode detected; installing and configuring systemd-boot"
     # Install systemd-boot with default options
     bootctl install
 
     # Initialise some variables to build on
-    local ucode=""
-    local root_part=""
-    local root_opts=""
-    local cmdline_extra=""
+    local ucode
+    local root_part
+    local root_opts
+    local cmdline_extra
+    # Initialise variables
+    ucode=""
+    root_part=""
+    root_opts=""
+    cmdline_extra=""
     
     # Add the microcode to the bootloader config if required
     if pacman -Qqe | grep -q intel-ucode; then 
@@ -184,10 +200,13 @@ _configure_bootloader() {
 }
 
 _setup_users() {
+  # Setup and init local variable
+  local username
+  username="$(_config_value username)"
+  
   _warn "Changing root password; enter below:"
   # Change the root password
   passwd
-  local username="$(_config_value username)"
   _info "Creating a non-root user: ${username}"
   # Create a new default user
   useradd -m -s /bin/bash -G wheel "${username}"
@@ -205,7 +224,7 @@ _setup_boot() {
   # Get the full /dev/xxx name of the disk
   disk="$(_config_value partitioning.disk)"
   # Enable fstrim timer if the boot disk is an SSD (strip the /dev/ from the disk name)
-  if [[ "$(cat /sys/block/${disk:5}/queue/rotational)" == "0" ]]; then
+  if [[ "$(cat /sys/block/"${disk:5}"/queue/rotational)" == "0" ]]; then
     systemctl enable fstrim.timer
   fi
 }
