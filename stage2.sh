@@ -37,9 +37,10 @@ _set_locale() {
 
 _set_hostname() {
   _info "Configuring hostname"
-  echo "$(_config_value hostname)" > /etc/hostname
+  local hostname="$(_config_value hostname)"
+  echo "${hostname}" > /etc/hostname
   # Update the template hosts file with selected hostname
-  sed -e "s/:HOSTNAME:/$(_config_value hostname)/g" /architect/templates/hosts > /etc/hosts
+  sed -e "s/:HOSTNAME:/${hostname}/g" /architect/templates/hosts > /etc/hosts
 }
 
 _create_encryption_keyfile() {
@@ -56,9 +57,10 @@ _setup_mkinitcpio() {
   # Setup some variables
   local initramfs_files=""
   local hooks=()
+  local encrypted="$(_config_value partitioning.encrypted)"
   
   # If we're setting up disk encryption on a BIOS system
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]] && ! _check_efi; then
+  if [[ "${encrypted}" == "true" ]] && ! _check_efi; then
     # Set variable pointing to the keyfile
     initramfs_files="/root/cryptlvm.keyfile"
     # Create a keyfile to embed in the initramfs
@@ -68,7 +70,7 @@ _setup_mkinitcpio() {
   # Add basic hooks required by all installs
   hooks+=(base systemd autodetect)
   # If encryption is enabled, add the relevant systemd/keyboard hooks
-  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+  if [[ "${encrypted}" == "true" ]]; then
     hooks+=(keyboard sd-vconsole modconf block sd-encrypt sd-lvm2 filesystems)
   else
     # Standard hooks without encryption
@@ -94,16 +96,18 @@ _setup_mkinitcpio() {
 }
 
 _setup_swap() {
+  local swap="$(_config_value partitioning.swap)"
+  local filesystem="$(_config_value partitioning.filesystem)"
   # Check that configured swap size is > 0
-  if [[ "$(_config_value partitioning.swap)" -gt 0 ]]; then
+  if [[ "${swap}" -gt 0 ]]; then
     _info "Configuring swapfile"
     # Create the /swap directory if it doesn't already exist
     mkdir -p /.swap
     # Swapfile creation for btrfs is slightly different - so check
-    if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
+    if [[ "${filesystem}" == "ext4" ]]; then
       # Create a simple blank swapfile with dd
-      dd if=/dev/zero of=/.swap/swapfile bs=1M count="$(_config_value partitioning.swap)" status=progress
-    elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+      dd if=/dev/zero of=/.swap/swapfile bs=1M count="${swap}" status=progress
+    elif [[ "${filesystem}" == "btrfs" ]]; then
       # Setup swapfile for btrfs
       truncate -s 0 /.swap/swapfile
       # Set NoCoW attribute
@@ -111,7 +115,7 @@ _setup_swap() {
       # Ensure compression is disabled
       btrfs property set /.swap/swapfile compression none
       # Allocate the swapfile
-      fallocate --length "$(_config_value partitioning.swap)MiB" /.swap/swapfile
+      fallocate --length "${swap}MiB" /.swap/swapfile
     fi
 
     # Set swapfile permissions
@@ -130,6 +134,7 @@ _configure_bootloader() {
     bootctl install
 
     # Initialise some variables to build on
+    local encrypted="$(_config_value partitioning.encrypted)"
     local ucode=""
     local root_part=""
     local root_opts=""
@@ -143,7 +148,7 @@ _configure_bootloader() {
     fi
         
     # Check if the setup uses an encrypted disk
-    if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+    if [[ "${encrypted}" == "true" ]]; then
       # Set the root partition
       root_part="rd.luks.name=$(blkid -t PARTLABEL=root -s UUID -o value)=cryptlvm root=/dev/vg/root"
     else
@@ -164,7 +169,7 @@ _configure_bootloader() {
     _info "BIOS mode detected; configuring GRUB"
 
     # If encrypted, then copy our modified grub defaults
-    if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+    if [[ "${encrypted}" == "true" ]]; then
       # Get the UUID of the root partition
       root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
       # Template the UUID into the GRUB bootloader config template
@@ -181,11 +186,12 @@ _setup_users() {
   _warn "Changing root password; enter below:"
   # Change the root password
   passwd
-  _info "Creating a non-root user: $(_config_value username)"
+  local username="$(_config_value username)"
+  _info "Creating a non-root user: ${username}"
   # Create a new default user
-  useradd -m -s /bin/bash -G wheel "$(_config_value username)"
-  _warn "Enter password for $(_config_value username)"
-  passwd "$(_config_value username)"
+  useradd -m -s /bin/bash -G wheel "${username}"
+  _warn "Enter password for ${username}"
+  passwd "${username}"
   # Uncomment a line from the /etc/sudoers file
   _info "Configuring sudo access for the wheel group"
   sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers
