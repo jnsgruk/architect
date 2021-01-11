@@ -37,3 +37,5 @@ architect:
   disable_stage3: false
   # Enable "set -x" in scripts for debugging
   debug: false
+  # Unmount drives and reboot after install
+  reboot: true

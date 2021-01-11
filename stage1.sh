@@ -20,9 +20,11 @@ _main() {
 
   _cleanup
 
-  _info "Rebooting"
-  umount -R /mnt
-  reboot 0
+  if [[ "$(_config_value architect.reboot)" == "true" ]]; then
+    _info "Rebooting"
+    umount -R /mnt
+    reboot 0
+  fi
 }
 
 _preamble() {

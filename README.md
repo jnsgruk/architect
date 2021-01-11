@@ -81,6 +81,8 @@ architect:
   disable_stage3: false
   # Enable "set -x" in scripts for debugging
   debug: false
+  # Unmount drives and reboot after install
+  reboot: true
 ```
 
 It is possible to specify a smaller config file to just override specific values in the defaults, for example:
