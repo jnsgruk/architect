@@ -160,6 +160,7 @@ _configure_bootloader() {
       root_opts="rootflags=subvol=@"
     fi
 
+    # Template out the bootloader config
     sed -e "s|:UCODE:|${ucode}|g" \
       -e "s|:ROOTPART:|${root_part}|g" \
       -e "s|:ROOTOPTS:|${root_opts}|g" \

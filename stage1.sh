@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Array to be built up appropriately as options are parsed
 pacstrap_packages=()
 
 _main() {
@@ -45,8 +46,6 @@ _setup_luks_lvm() {
   else
     # If we're on a BIOS system, we use GRUB, which doesn't support LUKS2
     cryptsetup luksFormat --type luks1 "${disk}2"
-    # Add grub to the initial install, we'll use it to boot the non-uefi system
-    pacstrap_packages+=(grub)
   fi
   
   _warn "Decrypting disk, password entry required"
@@ -151,10 +150,14 @@ _partition_and_mount() {
 }
 
 _pacstrap() {
-  # Configure pacman to use color in output
-  sed -i "s/#Color/Color/g" /etc/pacman.conf
   # Add basic required packages to pacstrap
   pacstrap_packages+=(base linux linux-firmware sudo networkmanager vim curl htop wget)
+
+  # Check if we're in a BIOS system
+  if ! _check_efi; then
+    # Add grub to the initial install, we'll use it to boot the non-uefi system
+    pacstrap_packages+=(grub)
+  fi
   
   # Work out the CPU model and add ucode to pacstrap if required
   if systemd-detect-virt; then
@@ -170,6 +173,7 @@ _pacstrap() {
   # Pacstrap the system with the required packages
   _info "Bootstrapping baseline Arch Linux system"
   pacstrap /mnt "${pacstrap_packages[@]}"
+  
   # Configure Pacman in new install
   sed -i "s/#Color/Color/g" /mnt/etc/pacman.conf
   sed -i "/^Color/a ILoveCandy" /mnt/etc/pacman.conf
