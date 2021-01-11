@@ -172,6 +172,7 @@ _pacstrap() {
   pacstrap /mnt "${pacstrap_packages[@]}"
   # Configure Pacman in new install
   sed -i "s/#Color/Color/g" /mnt/etc/pacman.conf
+  echo "ILoveCandy" >> /mnt/etc/pacman.conf
 }
 
 _cleanup() {
