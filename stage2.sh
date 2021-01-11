@@ -8,10 +8,10 @@ _main() {
   _set_locale
   _set_hostname
 
-  _setup_mkinitcpio
+  _setup_mkinitcpio initial
   _setup_swap
   
-  _configure_bootloader
+  _configure_bootloader initial
   _setup_boot
   _setup_users
 
@@ -75,7 +75,7 @@ _setup_mkinitcpio() {
   hooks+=(base systemd)
   
   # If this function is passed an argument "reconfigure"
-  if [[ -n "${1}" ]] && [[ "$1" == "reconfigure" ]]; then
+  if [[ "$1" == "reconfigure" ]]; then
     # This is only called in this mode from Stage 3 onwards to reconfigure for additional functionality
     # Check if Plymouth was enabled in the config
     if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
@@ -158,7 +158,7 @@ _configure_bootloader() {
   encrypted="$(_config_value partitioning.encrypted)"
 
   # If this function is passed an argument "reconfigure"
-  if [[ -n "${1}" ]] && [[ "$1" == "reconfigure" ]]; then
+  if [[ "$1" == "reconfigure" ]]; then
     # This is only called in this mode from Stage 3 onwards to reconfigure for additional functionality
     # Check if Plymouth was enabled in the config
     if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
