@@ -128,13 +128,13 @@ _setup_swap() {
 }
 
 _configure_bootloader() {
+  local encrypted="$(_config_value partitioning.encrypted)"
   if _check_efi; then
     _info "EFI mode detected; installing and configuring systemd-boot"
     # Install systemd-boot with default options
     bootctl install
 
     # Initialise some variables to build on
-    local encrypted="$(_config_value partitioning.encrypted)"
     local ucode=""
     local root_part=""
     local root_opts=""
