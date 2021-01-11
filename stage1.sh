@@ -164,8 +164,6 @@ _pacstrap() {
   # Pacstrap the system with the required packages
   _info "Bootstrapping baseline Arch Linux system"
   pacstrap /mnt "${pacstrap_packages[@]}"
-  # Configure Pacman in new install
-  sed -i "s/#Color/Color/g" /mnt/etc/pacman.conf
 }
 
 _cleanup() {
