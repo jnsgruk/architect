@@ -56,10 +56,9 @@ _setup_mkinitcpio() {
   # Setup some variables
   local initramfs_files=""
   local hooks=()
-  local encrypted="$(_config_value partitioning.encrypted)"
   
   # If we're setting up disk encryption on a BIOS system
-  if [[ "${encrypted}" == "true" ]] && ! _check_uefi; then
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]] && ! _check_uefi; then
     # Set variable pointing to the keyfile
     initramfs_files="/root/cryptlvm.keyfile"
     # Create a keyfile to embed in the initramfs
@@ -69,7 +68,7 @@ _setup_mkinitcpio() {
   # Add basic hooks required by all installs
   hooks+=(base systemd autodetect)
   # If encryption is enabled, add the relevant systemd/keyboard hooks
-  if [[ "${encrypted}" == "true" ]]; then
+  if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
     hooks+=(keyboard sd-vconsole modconf block sd-encrypt sd-lvm2 filesystems)
   else
     # Standard hooks without encryption
