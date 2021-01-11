@@ -69,8 +69,20 @@ _setup_mkinitcpio() {
         cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
       fi
     elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-      # Copy across the modified mkinitcpio.conf
-      cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
+      if _check_efi; then
+        # Copy across the modified mkinitcpio.conf
+        cp /architect/templates/mkinitcpio_encrypted_btrfs.conf /etc/mkinitcpio.conf
+      else
+        # Copy across the modified mkinitcpio.conf
+        cp /architect/templates/mkinitcpio_encrypted_btrfs_grub.conf /etc/mkinitcpio.conf
+        # Generate a new keyfile for the luks partition
+        dd bs=512 count=4 if=/dev/random of=/root/cryptlvm.keyfile iflag=fullblock
+        # Set permissions on keyfile
+        chmod 000 /root/cryptlvm.keyfile
+        # Add the keyfile to luks
+        _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
+        cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
+      fi
     fi
   else
     if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
@@ -149,13 +161,14 @@ _install_bootloader() {
     
     # Check if the setup uses an encrypted disk
     if [[ "$(_config_value partitioning.encrypted)" == "true" ]]; then
+      # Get the UUID of the root partition
+      root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
       if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
-        # Get the UUID of the root partition
-        root_uuid="$(blkid -t PARTLABEL=root -s UUID -o value)"
         # Add the options line to the systemd-boot config
         echo "options rd.luks.name=$root_uuid=cryptlvm root=/dev/vg/root" >> /boot/loader/entries/arch.conf
       elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
-        _error "Not implemented"
+        # Add the options line to the systemd-boot config
+        echo "options rd.luks.name=$root_uuid=cryptlvm root=/dev/vg/root rootflags=subvol=@" >> /boot/loader/entries/arch.conf
       fi
     else
       if [[ "$(_config_value partitioning.filesystem)" == "ext4" ]]; then
