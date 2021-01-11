@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pacstrap_packages=()
+
 _main() {
   # Source some helper functions and config
   source /architect/architect.sh
@@ -40,6 +42,8 @@ _setup_luks_lvm() {
   else
     # If we're on a BIOS system, we use GRUB, which doesn't support LUKS2
     cryptsetup luksFormat --type luks1 "$(_config_value partitioning.disk)2"
+    # Add grub to the initial install, we'll use it to boot the non-uefi system
+    pacstrap_packages+=(grub)
   fi
   
   _warn "Decrypting disk, password entry required"
@@ -51,6 +55,9 @@ _setup_luks_lvm() {
   pvcreate /dev/mapper/cryptlvm
   vgcreate vg /dev/mapper/cryptlvm
   lvcreate -l 100%FREE vg -n root
+
+  # Add the lvm2 package to the new install list
+  pacstrap_packages+=(lvm2)
 }
 
 _create_and_mount_filesystems() {
@@ -63,6 +70,8 @@ _create_and_mount_filesystems() {
     # Mount the root partition to /mnt
     mount "${root_part}" /mnt
   elif [[ "$(_config_value partitioning.filesystem)" == "btrfs" ]]; then
+    # Add the btrfs-progs to the new install list
+    pacstrap_packages+=(btrfs-progs)
     # Format the root partition
     mkfs.btrfs --force "${root_part}"
     # Mount the root partition to /mnt
@@ -136,10 +145,27 @@ _partition_and_mount() {
 }
 
 _pacstrap() {
-  pacstrap_packages=(base linux linux-firmware sudo networkmanager btrfs-progs)
-  # Pacstrap the system with the base packages above
+  # Configure pacman to use color in output
+  sed -i "s/#Color/Color/g" /mnt/etc/pacman.conf
+  # Add basic required packages to pacstrap
+  pacstrap_packages+=(base linux linux-firmware sudo networkmanager)
+  
+  # Work out the CPU model and add ucode to pacstrap if required
+  if systemd-detect-virt; then
+    _info "Virtualisation detected, skipping ucode installation"
+  elif grep -q "GenuineIntel" /proc/cpuinfo; then
+    _info "Intel CPU detected, installing intel-ucode"
+    pacstrap_packages+=(intel-ucode)
+  elif grep -q "AuthenticAMD" /proc/cpuinfo; then
+    _info "AMD CPU detected, installing amd-ucode"
+    pacstrap_packages+=(amd-ucode)
+  fi
+  
+  # Pacstrap the system with the required packages
   _info "Bootstrapping baseline Arch Linux system"
   pacstrap /mnt "${pacstrap_packages[@]}"
+  # Configure Pacman in new install
+  sed -i "s/#Color/Color/g" /mnt/etc/pacman.conf
 }
 
 _cleanup() {
