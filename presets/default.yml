@@ -21,6 +21,8 @@ provisioning:
   desktop: gnome
   # Install appropriate desktop extras like gnome-extra, kde-applications, xfce4-goodies
   desktop-extras: true
+  # Choose to install the Plymouth boot-splash
+  plymouth: true
   # List of packages to install
   packages:
     - git
