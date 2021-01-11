@@ -135,10 +135,10 @@ _install_aur() {
 
 _setup_plymouth() {
   # Only run this code if plymouth was enabled
-  if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
+  if [[ "$(_config_value provisioning.plymouth)" == "true" ]] && _check_efi; then
     # Declare some local variables to use
     local desktop=""
-    local aur_packages=(plymouth)
+    local aur_packages=(plymouth-git)
     desktop="$(_config_value provisioning.desktop)"
     
     # GDM/Plymouth work better together with the gdm-plymouth package
@@ -168,6 +168,9 @@ _setup_plymouth() {
       systemctl disable lightdm
       systemctl enable lightdm-plymouth
     fi
+
+    # Add the Arch Linux logo
+    cp /usr/share/plymouth/arch-logo.png /usr/share/plymouth/themes/spinner/watermark.png
   fi
 }
 
