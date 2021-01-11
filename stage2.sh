@@ -156,10 +156,10 @@ _configure_bootloader() {
       root_opts="rootflags=subvol=@"
     fi
 
-    sed -e "s/:UCODE:/${ucode}/g" \
-      -e "s/:ROOTPART:/${root_part}/g" \
-      -e "s/:ROOTOPTS:/${root_opts}/g" \
-      -e "s/:CMDLINE_EXTRA:/${cmdline_extra}/g" \
+    sed -e "s|:UCODE:|${ucode}|g" \
+      -e "s|:ROOTPART:|${root_part}|g" \
+      -e "s|:ROOTOPTS:|${root_opts}|g" \
+      -e "s|:CMDLINE_EXTRA:|${cmdline_extra}|g" \
       /architect/templates/arch.conf > /boot/loader/entries/arch.conf
   else
     _info "BIOS mode detected; configuring GRUB"
