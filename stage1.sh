@@ -19,6 +19,8 @@ _main() {
   arch-chroot /mnt /architect/stage2.sh
 
   _cleanup
+  # Get out of the chroot
+  exit 0
 
   if [[ "$(_config_value architect.reboot)" == "true" ]]; then
     _info "Rebooting"
@@ -172,7 +174,7 @@ _pacstrap() {
 
 _cleanup() {
   _info "Cleaning up"
-  rm -rf /mnt/architect
+  rm -rf /architect
   rm /usr/bin/yq
 }
 
