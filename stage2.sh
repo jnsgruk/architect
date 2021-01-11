@@ -55,7 +55,6 @@ _create_encryption_keyfile() {
   cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
 }
 
-# shellcheck disable=SC2120
 _setup_mkinitcpio() {
   # Setup some variables
   local initramfs_files=""
@@ -146,7 +145,6 @@ _setup_swap() {
   fi
 }
 
-# shellcheck disable=SC2120
 _configure_bootloader() {
    # Initialise some variables to build on
   local encrypted=""

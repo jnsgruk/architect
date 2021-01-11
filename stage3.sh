@@ -16,7 +16,8 @@ _install_base_packages() {
   # Convert the yaml packages list into a bash array
   mapfile -t packages < <(_config_list provisioning.packages)
   if [[ "${#packages[@]}" -gt 0 ]]; then
-    pacman -S --noconfirm "${packages[@]}"
+    #shellcheck disable=SC2068
+    pacman -S --noconfirm ${packages[@]}
   fi
 }
 
