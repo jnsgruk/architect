@@ -34,6 +34,9 @@ _set_locale() {
   # Set the default language and keymaps
   echo "LANG=$(_config_value regional.locale)" > /etc/locale.conf
   echo "KEYMAP=$(_config_value regional.keymap)" > /etc/vconsole.conf
+  # Set the default console font
+  echo "FONT=ter-u22n" >> /etc/vconsole.conf
+  setfont ter-u22n
 }
 
 _set_hostname() {
@@ -238,6 +241,8 @@ _setup_users() {
   useradd -m -s /bin/bash -G wheel "${username}"
   _warn "Enter password for ${username}"
   passwd "${username}"
+  # Add user to some groups
+  usermod -aG lp,storage,input "${username}"
   # Uncomment a line from the /etc/sudoers file
   _info "Configuring sudo access for the wheel group"
   sed -i "s/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g" /etc/sudoers

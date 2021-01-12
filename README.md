@@ -55,7 +55,7 @@ regional:
 partitioning:
   disk: /dev/vda
   # Choose either ext4 or btrfs
-  filesystem: ext4
+  filesystem: btrfs
   # If set to true, disk is encrypted with LVM-on-LUKS
   encrypted: false
   # Swapfile size in MiB. Set to zero to disable swap
@@ -67,15 +67,15 @@ provisioning:
   # Install appropriate desktop extras like gnome-extra, kde-applications, xfce4-goodies
   desktop-extras: true
   # Choose to install the Plymouth boot-splash
-  plymouth: false
+  plymouth: true
+  # Install a collection of extra fonts for the desktop
+  fonts: true
+  # Install bluetooth and bluetooth audio support
+  bluetooth: true
   # List of packages to install
   packages:
     - git
-    - htop
-    - wget
-    - curl
     - base-devel
-    - vim
 
 architect:
   # Choose the branch of Architect to clone during install
@@ -141,8 +141,8 @@ I'm planning to keep this project relatively minimal, but will consider adding f
 Currently planned features...
 
 - [ ] Add option to provide URL to post-provision script
-- [ ] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
-- [ ] Configure bluetooth and audio properly if desktop specified
+- [x] Install a sane set of fonts, cursors, themes, etc. if desktop if specified
+- [x] Configure bluetooth and audio properly if desktop specified
 - [x] Install and configure Plymouth with flicker-free boot
 - Configure TRIM properly if on a supported SSD
   - [x] Detect SSD and TRIM support

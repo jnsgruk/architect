@@ -10,7 +10,7 @@ regional:
 partitioning:
   disk: /dev/vda
   # Choose either ext4 or btrfs
-  filesystem: ext4
+  filesystem: btrfs
   # If set to true, disk is encrypted with LVM-on-LUKS
   encrypted: false
   # Swapfile size in MiB. Set to zero to disable swap
@@ -23,14 +23,14 @@ provisioning:
   desktop-extras: true
   # Choose to install the Plymouth boot-splash
   plymouth: true
+  # Install a collection of extra fonts for the desktop
+  fonts: true
+  # Install bluetooth and bluetooth audio support
+  bluetooth: true
   # List of packages to install
   packages:
     - git
-    - htop
-    - wget
-    - curl
     - base-devel
-    - vim
 
 architect:
   # Choose the branch of Architect to clone during install

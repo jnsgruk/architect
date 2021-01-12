@@ -157,7 +157,7 @@ _partition_and_mount() {
 
 _pacstrap() {
   # Add basic required packages to pacstrap
-  pacstrap_packages+=(base linux linux-firmware sudo networkmanager vim curl htop wget man-db)
+  pacstrap_packages+=(base linux linux-firmware sudo networkmanager vim curl htop wget man-db terminus-font)
 
   # Check if we're in a BIOS system
   if ! _check_efi; then

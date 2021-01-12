@@ -6,9 +6,12 @@ _main() {
   source /architect/architect.sh
   
   _install_base_packages
-  _install_desktop
   _setup_yay
   _setup_plymouth
+
+  _install_desktop
+  _install_fonts
+  _install_bluetooth
   _cleanup
 }
 
@@ -80,6 +83,28 @@ _install_desktop() {
       # Enable the display manager on boot
       systemctl enable lightdm
     fi
+  fi
+}
+
+_install_fonts() {
+  if [[ "$(_config_value provisioning.fonts)" == "true" ]]; then
+    # Install some fonts
+    fonts=(ttf-ubuntu-font-family ttf-joypixels ttf-fira-code ttf-dejavu)
+    pacman -S --noconfirm "${fonts[@]}"
+    # Update the font-cache
+    fc-cache -f -v
+  fi
+}
+
+_install_bluetooth() {
+  if [[ "$(_config_value provisioning.bluetooth)" == "true" ]]; then
+    # Install bluetooth packages
+    pacman -S --noconfirm bluez bluez-utils pulseaudio-bluetooth
+    # Enable the bluetooth service
+    systemctl enable bluetooth
+    # Load PulseAudio bluetooth modules
+    echo "load-module module-bluetooth-policy" >> /etc/pulse/system.pa
+    echo "load-module module-bluetooth-discover" >> /etc/pulse/system.pa
   fi
 }
 
