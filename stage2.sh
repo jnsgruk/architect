@@ -77,7 +77,7 @@ _setup_mkinitcpio() {
   if [[ "$1" == "reconfigure" ]]; then
     # This is only called in this mode from Stage 3 onwards to reconfigure for additional functionality
     # Check if Plymouth was enabled in the config
-    if [[ "$(_config_value provisioning.plymouth)" == "true" ]] && _check_efi; then
+    if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
       # Add the sd-plymouth hook
       hooks+=(sd-plymouth)
     fi
@@ -159,7 +159,7 @@ _configure_bootloader() {
   if [[ "$1" == "reconfigure" ]]; then
     # This is only called in this mode from Stage 3 onwards to reconfigure for additional functionality
     # Check if Plymouth was enabled in the config
-    if [[ "$(_config_value provisioning.plymouth)" == "true" ]] && _check_efi; then
+    if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
       # Add kernel command line params for plymouth
       cmdline_extra="quiet splash loglevel=3 rd.udev.log_priority=3 vt.global_cursor_default=0"
     fi

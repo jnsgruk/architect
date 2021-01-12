@@ -17,6 +17,7 @@ By default, the script will:
 - Install and enable NetworkManager
 - Install [yay](https://github.com/Jguer/yay)
 - Install a Desktop Environment (Gnome, Plasma, XFCE or Mate)
+- Install and configure Plymouth with flicker-free boot
 
 ## Getting Started
 
@@ -131,6 +132,7 @@ Stage 3 aims to raise the install from "minimum viable arch" to a more usable sy
 - Install more packages
 - Install and configure the `yay` AUR helper
 - Install and configure a desktop environment (Gnome, Plasma, XFCE or Mate)
+- Install and configure Plymouth
 
 ## TODO/Contributing
 

@@ -86,26 +86,22 @@ _install_desktop() {
 _install_xorg_drivers() {
   # First detect the GPU type
   gpuinfo="$(lspci -v | grep -A1 -e VGA -e 3D)"
-
-  if grep -i -q "qxl" <<<"${gpuinfo}"; then
+  # Install the xorg-drivers group
+  local drivers=(xorg-drivers)
+  
+  if grep -i -q -E "qxl|virtio" <<<"${gpuinfo}"; then
     _info "QXL/Virtualised GPU detected"
-    drivers=(spice-vdagent qemu-guest-agent)
-  elif grep -i -q "intel" <<<"${gpuinfo}"; then
-    _info "Intel GPU detected"
-    drivers=(xf86-video-intel)
-  elif grep -i -q "amd" <<<"${gpuinfo}"; then
-    _info "AMD GPU detected"
-    drivers=(xf86-video-amdgpu)
+    drivers+=(spice-vdagent qemu-guest-agent)
   elif grep -i -q "nvidia" <<<"${gpuinfo}"; then
     _info "nVidia GPU detected"
-    drivers=(nvidia)
+    drivers+=(nvidia)
   fi
   # Install Xorg and video drivers
   _info "Installing Xorg and video drivers"
   pacman -S --noconfirm xorg-server "${drivers[@]}"
 
   # Enable spice-vdagent if QXL
-  if grep -i -q "qxl" <<<"${gpuinfo}"; then
+  if grep -i -q -E "qxl|virtio" <<<"${gpuinfo}"; then
     _info "Enabling spice agent"
     systemctl enable spice-vdagentd
     systemctl enable qemu-guest-agent
@@ -129,23 +125,37 @@ _setup_yay() {
 }
 
 # Wrapper function to install a package from the AUR with no prompts
+# This is quite a dangerous function; you probably shouldn't use yay like this!
 _install_aur() {
-  sudo -u architect yay --save --nodiffmenu --noeditmenu --nocleanmenu "$@"
+  sudo -u architect yay \
+    --nodiffmenu \
+    --noeditmenu \
+    --nocleanmenu \
+    --answerupgrade y \
+    --noremovemake \
+    -S --noconfirm "$@"
 }
 
 _setup_plymouth() {
   # Only run this code if plymouth was enabled
-  if [[ "$(_config_value provisioning.plymouth)" == "true" ]] && _check_efi; then
+  if [[ "$(_config_value provisioning.plymouth)" == "true" ]]; then
     # Declare some local variables to use
     local desktop=""
-    local aur_packages=(plymouth-git)
     desktop="$(_config_value provisioning.desktop)"
     
+    # Install plymouth
+    _install_aur plymouth
+
     # GDM/Plymouth work better together with the gdm-plymouth package
     if [[ "${desktop}" == "gnome" ]]; then
-      aur_packages+=(gdm-plymouth)
+      # Remove conflicting versions of gdm/libgdm before aur install
+      pacman -Rd --nodeps --noconfirm gdm libgdm
+      # Install the new version of gdm with plymouth integration
+      _install_aur gdm-plymouth
+      # Make sure gdm is enabled
+      systemctl enable gdm
     fi
-
+  
     # Install needed packages
     _install_aur "${aur_packages[@]}"
 
