@@ -198,9 +198,9 @@ _configure_bootloader() {
 
     # Add the microcode to the bootloader config if required
     if pacman -Qqe | grep -q intel-ucode; then 
-      ucode="initrd  /intel-code.img"
+      ucode="initrd  /intel-ucode.img"
     elif pacman -Qqe | grep -q amd-ucode; then 
-      ucode="initrd  /amd-code.img"
+      ucode="initrd  /amd-ucode.img"
     fi
 
     # Template out the bootloader config

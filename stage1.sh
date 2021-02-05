@@ -128,7 +128,7 @@ _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
   local disk=""
   local root_part=""
-  
+
   disk="$(_config_value partitioning.disk)"
   # Create a new partition table
   parted "${disk}" -s mklabel gpt
@@ -170,7 +170,7 @@ _partition_and_mount() {
   # created root partition
   _create_and_mount_filesystems "${root_part}"
   # Create the etc directory
-  mkdir /mnt/etc
+  mkdir -p /mnt/etc
   # Generate the fstab file
   genfstab -U /mnt >> /mnt/etc/fstab
 }
