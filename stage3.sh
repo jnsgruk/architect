@@ -7,9 +7,8 @@ _main() {
   
   _install_base_packages
   _setup_yay
-  _setup_plymouth
-
   _install_desktop
+  _setup_plymouth
   _install_fonts
   _install_bluetooth
   _cleanup
