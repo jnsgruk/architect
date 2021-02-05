@@ -22,7 +22,7 @@ _main() {
 
   _cleanup
 
-  if [[ "${ARCHITECT_REBOOT}" == "true" ]]; then
+  if [[ "${ARCHITECT_REBOOT:-}" == "true" ]]; then
     _info "Rebooting"
     umount -R /mnt
     reboot 0
