@@ -55,7 +55,13 @@ _create_encryption_keyfile() {
   chmod 000 /root/cryptlvm.keyfile
   # Add the keyfile to luks
   _warn "Adding a keyfile to LUKS to avoid double password entry on boot. Enter disk encryption password when prompted"
-  cryptsetup -v luksAddKey "$(_config_value partitioning.disk)2" /root/cryptlvm.keyfile
+  local root_part="$(_config_value partitioning.disk)2"
+  # Handle nvme partition names
+  if echo "${disk}" | grep -q "nvme"; then
+    root_part="$(_config_value partitioning.disk)p2"
+  fi
+  # Add the keyfile
+  cryptsetup -v luksAddKey "${root_part}" /root/cryptlvm.keyfile
 }
 
 _setup_mkinitcpio() {

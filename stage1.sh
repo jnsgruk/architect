@@ -40,19 +40,27 @@ _preamble() {
 _setup_luks_lvm() {
   _warn "Setting up disk encryption. Confirmation and password entry required"
   local disk=""
+  local boot_part="1"
+  local root_part="2"
   disk="$(_config_value partitioning.disk)"
+  
+  # Handle nvme partition names
+  if echo "${disk}" | grep -q "nvme"; then
+    root_part="p2"
+    boot_part="p1"
+  fi
   
   # luksFormat the root partition
   if _check_efi; then
-    cryptsetup luksFormat "${disk}2"
+    cryptsetup luksFormat "${disk}${root_part}"
   else
     # If we're on a BIOS system, we use GRUB, which doesn't support LUKS2
-    cryptsetup luksFormat --type luks1 "${disk}2"
+    cryptsetup luksFormat --type luks1 "${disk}${root_part}"
   fi
   
   _warn "Decrypting disk, password entry required"
   # Open the encrypted container
-  cryptsetup open "${disk}2" cryptlvm
+  cryptsetup open "${disk}${root_part}" cryptlvm
   # Setup LVM physical volumes, volume groups and logical volumes
   _info "Setting up LVM"
   # Create a physical volume
@@ -103,10 +111,15 @@ _create_and_mount_filesystems() {
 
   # Check if we're on a UEFI system
   if _check_efi; then
+    local boot_part="${disk}1"
+    # Handle nvme partition names
+    if echo "${disk}" | grep -q "nvme"; then
+      boot_part="${disk}p1"
+    fi
     # Format the boot partition
-    mkfs.fat -F32 "${disk}1"
+    mkfs.fat -F32 "${boot_part}"
     # Mount the boot partition
-    mount -o "defaults,x-mount.mkdir" "${disk}1" /mnt/boot
+    mount -o "defaults,x-mount.mkdir" "${boot_part}" /mnt/boot
   fi
 }
 
@@ -114,6 +127,8 @@ _create_and_mount_filesystems() {
 _partition_and_mount() {
   _info "Partitioning disks and generating fstab"
   local disk=""
+  local root_part=""
+  
   disk="$(_config_value partitioning.disk)"
   # Create a new partition table
   parted "${disk}" -s mklabel gpt
@@ -143,7 +158,12 @@ _partition_and_mount() {
     _setup_luks_lvm
     root_part="/dev/vg/root"
   else
-    root_part="${disk}2"
+    # Handle nvme partition names
+    if echo "${disk}" | grep -q "nvme"; then
+      root_part="${disk}p2"
+    else
+      root_part="${disk}2"
+    fi
   fi
 
   # Create the relevant filesystems and mount them for install using the newly
