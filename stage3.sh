@@ -55,6 +55,8 @@ _install_desktop() {
       fi
       # Enable the display manager on boot
       systemctl enable sddm
+      # Make plasma shell start with systemd
+      kwriteconfig5 --file startkderc --group General --key systemdBoot true
     elif [[ "${desktop}" == "xfce" ]]; then
       _info "Installing XFCE"
       # Install basic XFCE and LightDM packages
