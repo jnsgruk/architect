@@ -95,7 +95,7 @@ _setup_mkinitcpio() {
   hooks+=(autodetect)
   # If encryption is enabled, add the relevant systemd/keyboard hooks
   if [[ "${encrypted}" == "true" ]]; then
-    hooks+=(keyboard sd-vconsole modconf block sd-encrypt sd-lvm2 filesystems)
+    hooks+=(keyboard sd-vconsole modconf block sd-encrypt lvm2 filesystems)
   else
     # Standard hooks without encryption
     hooks+=(modconf block filesystems)
