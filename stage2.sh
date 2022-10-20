@@ -140,7 +140,7 @@ _setup_swap() {
       # Set NoCoW attribute
       chattr +C /.swap/swapfile
       # Ensure compression is disabled
-      btrfs property set /.swap/swapfile compression none
+      btrfs property set /.swap/swapfile compression ""
       # Allocate the swapfile
       fallocate --length "${swap}MiB" /.swap/swapfile
     fi
